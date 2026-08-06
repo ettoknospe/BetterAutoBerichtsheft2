@@ -5,10 +5,14 @@ data.bak/
 __pycache__/
 .DS_Store
 .pytest_cache/
-graphify-out/
 .claude/
 old-project/
 logo.png
 logo.svg
 sync-svgrepo-com.svg
 help.svg
+graphify-out/cost.json        # local only
+# graphify-out/cache/         # optional: commit for speed, skip to keep repo small
+graphify-out/.graphify_python # machine-local interpreter path
+graphify-out/.graphify_root   # machine-local absolute scan root
+graphify-out/[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]/  # dated pre-overwrite backups

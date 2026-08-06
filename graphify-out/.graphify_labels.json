@@ -1,0 +1,21 @@
+{
+  "0": "Auth & Bulk Ops API",
+  "1": "IHK Backfill & Portal Client",
+  "2": "Scraper Tests",
+  "3": "IHK Client CLI",
+  "4": "Database Layer",
+  "5": "API Integration Tests",
+  "6": "Encrypted Storage",
+  "7": "Auth & Sessions",
+  "8": "Crypto (Fernet)",
+  "9": "Test Fixtures",
+  "10": "Runtime Config",
+  "11": "Empty Week Detection",
+  "12": "Two-tier Encryption",
+  "13": "SQLite Database File",
+  "14": "Bulk Operations UI",
+  "15": "Help Documentation",
+  "16": "Main Viewer UI",
+  "17": "Login UI",
+  "18": "Settings UI"
+}
