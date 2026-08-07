@@ -198,16 +198,16 @@ function renderWeek(data, wid) {
       <div class="summary ihk-form">
         ${showForm ? `
           <h2>Bei IHK einreichen</h2>
-          <label for="ihkField1">Betriebliche Tätigkeiten</label>
-          <textarea id="ihkField1" rows="4"></textarea>
-          <label for="ihkField2">Unterweisungen, betrieblicher Unterricht, sonstige Schulungen</label>
-          <textarea id="ihkField2" rows="4"></textarea>
           ${!ihkUseSettingsForAbschnitt ? `
             <label for="ihkAbschnitt">Ausbildungsabschnitt</label>
             <input type="text" id="ihkAbschnitt" placeholder="z.B. 1">
             <label for="ihkAusbMail">Ausbilder Mail</label>
             <input type="email" id="ihkAusbMail" placeholder="ausbilder@example.com">
           ` : ''}
+          <label for="ihkField1">Betriebliche Tätigkeiten</label>
+          <textarea id="ihkField1" rows="4"></textarea>
+          <label for="ihkField2">Unterweisungen, betrieblicher Unterricht, sonstige Schulungen</label>
+          <textarea id="ihkField2" rows="4"></textarea>
           <label for="berufsschuleText">Berufsschule</label>
         ` : hist ? `
           <h2>IHK Eintrag</h2>
