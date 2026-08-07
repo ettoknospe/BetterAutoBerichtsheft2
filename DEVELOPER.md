@@ -51,6 +51,38 @@ berichtsheft/
 └── pytest.ini                  # Test configuration
 ```
 
+### The `UserSettings` seam
+
+`UserSettings` (in `app/settings.py`) is the one object that ties the backend
+together. It is a plain dataclass holding a single user's WebUntis + IHK
+credentials, `DATA_DIR`, and scrape schedule — a per-user replacement for the old
+`config.py` module globals. It is **dependency-injected, not imported as state**:
+production code rebuilds it from the DB per request via `db._row_to_settings()` and
+passes it explicitly, while every consumer uses the `settings = settings or
+UserSettings.from_config()` fallback (the `from_config()` path is test/bootstrap
+only — see the `config.py` note in `AGENTS.md`).
+
+That single parameter object is what threads through the whole backend, which is
+why a knowledge-graph of the repo shows `UserSettings` as its most-connected node:
+
+- **Imported by all six backend modules** that need per-user config: `main.py`,
+  `db.py`, `scraper.py`, `untis_client.py`, `ihk_client.py`, `ihk_submitter.py`.
+- **Constructed from the DB** by `db._row_to_settings()` / `update_user_settings()`,
+  and by `main.py` on each scrape/submit/test request.
+- **Passed as `settings=`** into `scrape_week()`, `submit_week()`, `UntisClient`,
+  `IhkClient`, and the `ihk_submitter` load/save helpers.
+
+If you add a new subsystem that needs credentials or scrape config, take a
+`UserSettings` argument the same way — do **not** read `config.py` globals directly
+(those are legacy/test-only) and do not add a second per-user config object.
+
+> Note on graph analysis: automated tools may also draw INFERRED edges from the
+> Pydantic request models (`LoginRequest`, `ScrapeRequest`, `SettingsUpdateRequest`,
+> …) to `UserSettings`. Those are not real — the request models are flat payload
+> schemas and never reference the dataclass (`SettingsUpdateRequest` mirrors its
+> fields but is a separate type). The load-bearing links are the six `imports` plus
+> the DB construction above.
+
 ## Install and Run
 
 ### First-Time Setup
