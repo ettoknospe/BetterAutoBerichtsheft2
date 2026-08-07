@@ -19,28 +19,30 @@
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
-html, body { height: 100%; }
+html, body { min-height: 100%; }
 
 body {
   font: 16px/1.5 -apple-system, system-ui, sans-serif;
   background: var(--bg);
   color: var(--text);
-  display: flex;
-  flex-direction: row;
 }
 
 /* ============================================================
    Sidebar
    ============================================================ */
 .sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
   width: var(--sidebar-w);
+  z-index: 20;
   background: var(--card);
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   padding: 1rem;
   overflow-y: auto;
-  flex-shrink: 0;
 }
 
 .sidebar-header {
@@ -132,6 +134,40 @@ body {
 }
 .logout-btn:hover { background: #dc2626; }
 
+/* ---- Collapsible sidebar (desktop) ---------------------------------- */
+.sidebar-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.6rem 1rem;
+  margin-bottom: 0.75rem;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.9rem;
+}
+.sidebar-toggle:hover { background: var(--bg); color: var(--text); }
+.sidebar-toggle .nav-icon { transition: transform 0.2s ease; }
+.sidebar, .main { transition: width 0.2s ease, margin-left 0.2s ease; }
+
+/* Collapse only applies on desktop; gated so it never hides the labels in
+   the mobile drawer. Overriding --sidebar-w narrows both the fixed sidebar
+   and the main offset in one shot. */
+@media (min-width: 769px) {
+  body.sidebar-collapsed { --sidebar-w: 76px; }
+  body.sidebar-collapsed .sidebar-title,
+  body.sidebar-collapsed .nav-text { display: none; }
+  body.sidebar-collapsed .sidebar-header { justify-content: center; }
+  body.sidebar-collapsed .sidebar-nav a,
+  body.sidebar-collapsed .logout-btn,
+  body.sidebar-collapsed .sidebar-toggle { justify-content: center; padding-left: 0; padding-right: 0; }
+  body.sidebar-collapsed .sidebar-toggle .nav-icon { transform: rotate(180deg); }
+}
+
 /* ============================================================
    Mobile top bar + backdrop (hidden on desktop)
    ============================================================ */
@@ -142,15 +178,11 @@ body {
    Main content shell
    ============================================================ */
 .main {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
+  margin-left: var(--sidebar-w);
+  min-height: 100vh;
 }
 
 .content-wrapper {
-  flex: 1;
-  overflow-y: auto;
   padding: 1.5rem 1rem;
   max-width: 900px;
   margin: 0 auto;
@@ -490,7 +522,7 @@ button.loading .spinner { display: inline-block; }
    Mobile: off-canvas sidebar drawer + top bar
    ============================================================ */
 @media (max-width: 768px) {
-  body { flex-direction: column; }
+  .main { margin-left: 0; }
 
   .topbar {
     display: flex;
@@ -542,6 +574,7 @@ button.loading .spinner { display: inline-block; }
   }
   body.drawer-open .backdrop { opacity: 1; pointer-events: auto; }
 
+  .sidebar-toggle { display: none; }
   .content-wrapper { padding: 1rem; }
   #view-settings .form-row { grid-template-columns: 1fr; }
 }

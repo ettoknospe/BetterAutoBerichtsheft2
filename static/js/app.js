@@ -49,6 +49,17 @@ function logout() {
 function openDrawer() { document.body.classList.add("drawer-open"); }
 function closeDrawer() { document.body.classList.remove("drawer-open"); }
 
+// ---- collapsible sidebar (desktop) ----
+function toggleSidebar() {
+  const collapsed = document.body.classList.toggle("sidebar-collapsed");
+  localStorage.setItem("sidebarCollapsed", collapsed ? "true" : "false");
+}
+// Restore persisted state at module load (harmless on mobile - the collapse
+// CSS is gated to >=769px). Done before the async auth guard to avoid a flash.
+if (localStorage.getItem("sidebarCollapsed") === "true") {
+  document.body.classList.add("sidebar-collapsed");
+}
+
 // ---- router ----
 function routeFromHash() {
   const r = window.location.hash.replace(/^#\/?/, "");
@@ -89,6 +100,14 @@ export const ready = (async () => {
   if (hb) hb.addEventListener("click", openDrawer);
   const bd = $("backdrop");
   if (bd) bd.addEventListener("click", closeDrawer);
+  // Close the mobile drawer on any nav tap - hashchange->showRoute already
+  // closes it when the route changes, but tapping the current route fires no
+  // hashchange, so close here too.
+  document.querySelectorAll(".sidebar-nav a[data-route]").forEach((a) =>
+    a.addEventListener("click", closeDrawer)
+  );
+  const tog = $("sidebarToggle");
+  if (tog) tog.addEventListener("click", toggleSidebar);
 
   const user = await whoami();
   await ensureCacheOwnership(user.username);
