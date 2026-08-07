@@ -7,837 +7,312 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>BetterAutoBerichtsheft</title>
-<style>
-  :root {
-    --bg: #fafbfc; --card: #ffffff; --text: #0f1419; --text-muted: #57606a;
-    --accent: #3b82f6; --accent-dark: #2563eb; --border: #d5dce0;
-    --ok: #34c759; --err: #ef4444; --warn: #c9960c;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #0f1419; --card: #1a1f28; --text: #f5f7fa; --text-muted: #a0a9b8;
-      --border: #2d3544;
-    }
-  }
-
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  html, body { height: 100%; }
-
-  body {
-    font: 16px/1.5 -apple-system, system-ui, sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    display: flex;
-    flex-direction: row;
-  }
-
-  /* Sidebar */
-  .sidebar {
-    width: 260px;
-    background: var(--card);
-    border-right: 1px solid var(--border);
-    display: flex;
-    flex-direction: column;
-    padding: 1rem;
-    overflow-y: auto;
-    flex-shrink: 0;
-    transition: width 0.3s ease;
-  }
-
-  .sidebar.collapsed {
-    width: 90px;
-  }
-
-  .sidebar-header {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    margin-bottom: 2rem;
-    padding-bottom: 1.5rem;
-    border-bottom: 1px solid var(--border);
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-
-  .sidebar.collapsed .sidebar-header {
-    margin-bottom: 1rem;
-    padding-bottom: 1rem;
-    flex-direction: column;
-    align-items: center;
-  }
-
-  .sidebar-header:hover {
-    opacity: 0.7;
-  }
-
-  .sidebar-logo-img {
-    width: 50px;
-    height: 50px;
-    border-radius: 8px;
-    flex-shrink: 0;
-    object-fit: cover;
-  }
-
-  .sidebar.collapsed .sidebar-logo-img {
-    width: 60px;
-    height: 60px;
-  }
-
-  .sidebar-title {
-    font-size: 1rem;
-    font-weight: 600;
-    letter-spacing: -0.5px;
-    white-space: nowrap;
-  }
-
-  .sidebar.collapsed .sidebar-title {
-    font-size: 0.8rem;
-    text-align: center;
-  }
-
-  .title-short {
-    display: none;
-  }
-
-  .sidebar.collapsed .title-full {
-    display: none;
-  }
-
-  .sidebar.collapsed .title-short {
-    display: inline;
-  }
-
-  .sidebar-nav {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .sidebar-nav a, .sidebar-nav button {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.75rem 1rem;
-    margin-bottom: 0.5rem;
-    background: transparent;
-    border: 1px solid transparent;
-    border-radius: 8px;
-    color: var(--text);
-    text-decoration: none;
-    cursor: pointer;
-    font-size: 0.95rem;
-    transition: all 0.2s;
-    font-family: inherit;
-  }
-
-  .sidebar.collapsed .sidebar-nav a,
-  .sidebar.collapsed .sidebar-nav button {
-    gap: 0;
-    padding: 0.75rem;
-    justify-content: center;
-  }
-
-  .nav-icon {
-    font-size: 1.2rem;
-  }
-
-  .nav-icon-img {
-    width: 1.2rem;
-    height: 1.2rem;
-    display: inline-block;
-  }
-
-  .sidebar-nav a .nav-icon-img,
-  .sidebar-nav button .nav-icon-img {
-    filter: invert(1);
-  }
-
-  @media (prefers-color-scheme: light) {
-    .sidebar-nav a .nav-icon-img,
-    .sidebar-nav button .nav-icon-img {
-      filter: none;
-    }
-  }
-
-  .nav-text {
-    display: inline;
-  }
-
-  .sidebar.collapsed .nav-text {
-    display: none;
-  }
-
-  .sidebar-nav a:hover, .sidebar-nav button:hover {
-    background: var(--bg);
-    border-color: var(--border);
-  }
-
-  .sidebar-footer {
-    padding-top: 1.5rem;
-    border-top: 1px solid var(--border);
-  }
-
-  .sidebar.collapsed .sidebar-footer {
-    padding-top: 1rem;
-  }
-
-  .logout-btn {
-    width: 100%;
-    padding: 0.75rem 1rem;
-    background: var(--err);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 0.95rem;
-    font-weight: 600;
-    transition: all 0.2s;
-    font-family: inherit;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-  }
-
-  .sidebar.collapsed .logout-btn {
-    padding: 0.75rem;
-    justify-content: center;
-    gap: 0;
-  }
-
-  .logout-btn:hover {
-    background: #dc2626;
-  }
-
-  /* Main content */
-  .main {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  }
-
-  .content-wrapper {
-    flex: 1;
-    overflow-y: auto;
-    padding: 1.5rem 1rem;
-    max-width: 900px;
-    margin: 0 auto;
-    width: 100%;
-  }
-
-  h1 { font-size: 1.6rem; margin-bottom: 1rem; }
-
-  .nav { display: flex; align-items: center; gap: .5rem; margin-bottom: 1rem; }
-  .nav button, .actions button {
-    border: 1px solid var(--border);
-    background: var(--card);
-    color: var(--text);
-    border-radius: 8px;
-    padding: .6rem .9rem;
-    font-size: 0.95rem;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-  .nav button:hover, .actions button:hover {
-    border-color: var(--accent);
-    background: var(--bg);
-  }
-  .nav button:disabled { opacity: .5; cursor: not-allowed; }
-
-  .nav select {
-    flex: 1;
-    border: 1px solid var(--border);
-    background: var(--card);
-    color: var(--text);
-    border-radius: 8px;
-    padding: .6rem .9rem;
-    font-size: 0.95rem;
-  }
-
-  .meta { color: var(--text-muted); font-size: .9rem; margin-bottom: 1rem; }
-
-  .actions {
-    display: flex;
-    gap: .6rem;
-    margin-bottom: 1.5rem;
-    flex-wrap: wrap;
-  }
-
-  .actions .primary {
-    background: var(--accent);
-    color: #fff;
-    border-color: var(--accent);
-  }
-
-  .actions .primary:hover {
-    background: var(--accent-dark);
-  }
-
-  .day {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 1rem;
-    margin-bottom: .9rem;
-  }
-  .day h2 { font-size: 1.05rem; margin-bottom: .6rem; }
-
-  .lesson { padding: .5rem 0; border-top: 1px solid var(--border); }
-  .lesson:first-of-type { border-top: none; }
-  .lesson .head { display: flex; gap: .6rem; align-items: baseline; margin-bottom: .4rem; }
-  .lesson .subj { font-weight: 600; }
-  .lesson .meta { color: var(--text-muted); font-size: .8rem; }
-  .lesson .content { white-space: pre-wrap; margin-top: .15rem; }
-  .lesson .empty { color: var(--text-muted); font-style: italic; }
-
-  .summary {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 1rem;
-    margin-bottom: 1.5rem;
-  }
-  .summary h2 {
-    font-size: 1.05rem;
-    margin-bottom: .6rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  .summary pre { white-space: pre-wrap; font: inherit; }
-
-  #status {
-    min-height: 1.4rem;
-    font-size: .9rem;
-    margin-bottom: 1rem;
-    padding: 0.75rem;
-    border-radius: 8px;
-  }
-  #status.err {
-    color: var(--err);
-    background: rgba(239, 68, 68, 0.1);
-    border: 1px solid rgba(239, 68, 68, 0.2);
-  }
-  #status.ok {
-    color: var(--ok);
-    background: rgba(52, 199, 89, 0.1);
-    border: 1px solid rgba(52, 199, 89, 0.2);
-  }
-
-  #ihkBadge { font-size: .8rem; margin-left: .5rem; }
-  #ihkBadge.genehmigt { color: var(--ok); }
-  #ihkBadge.in-bearbeitung { color: var(--text-muted); }
-  #ihkBadge.warten-auf-genehmigung { color: var(--warn); }
-  #ihkBadge.abgelehnt { color: var(--err); }
-
-  #ihkBtn:disabled { opacity: .5; cursor: not-allowed; }
-
-  .ihk-form label {
-    display: block;
-    font-size: .8rem;
-    font-weight: 700;
-    letter-spacing: .04em;
-    text-transform: uppercase;
-    color: var(--accent);
-    margin: 1.1rem 0 .35rem;
-  }
-  .ihk-form label:first-of-type { margin-top: 0; }
-  .ihk-form textarea, .ihk-form input[type="text"], .ihk-form input[type="email"] {
-    width: 100%;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: .75rem;
-    font: inherit;
-    background: var(--bg);
-    color: var(--text);
-  }
-  .ihk-form textarea {
-    min-height: 4.5rem;
-    resize: vertical;
-  }
-  .ihk-form input[type="text"], .ihk-form input[type="email"] {
-    height: 2.5rem;
-  }
-  .placeholder { color: var(--text-muted); text-align: center; padding: 3rem 0; }
-
-  @media (max-width: 768px) {
-    body { flex-direction: column; }
-    .sidebar { width: 100%; border-right: none; border-bottom: 1px solid var(--border); }
-    .sidebar.collapsed { width: 100%; }
-    .content-wrapper { padding: 1rem; }
-  }
-</style>
+<link rel="stylesheet" href="/app.css">
 </head>
 <body>
 
-<aside class="sidebar" id="sidebar" onclick="expandSidebar(event)">
-  <div class="sidebar-header" onclick="expandSidebar(event)">
-    <img src="/logo.svg" alt="Logo" class="sidebar-logo-img">
-    <div class="sidebar-title">
-      <span class="title-full">BetterAutoBerichtsheft</span>
-      <span class="title-short">BAB</span>
-    </div>
+<!-- Mobile top bar (hidden on desktop via CSS) -->
+<div class="topbar">
+  <button class="hamburger" id="hamburger" aria-label="Menü öffnen">☰</button>
+  <span class="topbar-title" id="topbarTitle">Wochen</span>
+</div>
+<div class="backdrop" id="backdrop"></div>
+
+<!-- Persistent sidebar -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <img src="/logo.svg" alt="" class="sidebar-logo-img" onerror="this.style.display='none'">
+    <div class="sidebar-title">BetterAutoBerichtsheft</div>
   </div>
 
   <nav class="sidebar-nav">
-    <a href="/help.html" title="Hilfe" class="nav-link">
-      <img src="/help.svg" alt="Hilfe" class="nav-icon nav-icon-img">
-      <span class="nav-text">Hilfe</span>
+    <a href="#/week" data-route="week">
+      <span class="nav-icon">📅</span>
+      <span class="nav-text">Wochen</span>
     </a>
-    <a href="/bulkops.html" title="Datenimport" class="nav-link">
-      <img src="/sync.svg" alt="Import" class="nav-icon nav-icon-img">
+    <a href="#/import" data-route="import">
+      <img src="/sync.svg" alt="" class="nav-icon nav-icon-img">
       <span class="nav-text">Datenimport</span>
     </a>
-    <a href="/settings.html" title="Einstellungen öffnen" class="nav-link">
+    <a href="#/settings" data-route="settings">
       <span class="nav-icon">⚙</span>
       <span class="nav-text">Einstellungen</span>
+    </a>
+    <a href="#/help" data-route="help">
+      <span class="nav-icon">❔</span>
+      <span class="nav-text">Hilfe</span>
     </a>
   </nav>
 
   <div class="sidebar-footer">
-    <button class="logout-btn" onclick="logout()" title="Abmelden" class="logout-link">
+    <button class="logout-btn" id="logoutBtn" title="Abmelden">
       <span class="nav-icon">←</span>
       <span class="nav-text">Abmelden</span>
     </button>
   </div>
 </aside>
 
-<main class="main" onclick="collapseSidebar()">
+<main class="main">
   <div class="content-wrapper">
-    <div class="nav">
-      <button id="prev" title="Woche zurück">←</button>
-      <select id="weekSelect"></select>
-      <button id="next" title="Woche vor">→</button>
-    </div>
-    <div class="meta"><span id="weekMeta"></span> <span id="ihkBadge"></span></div>
 
-    <div class="actions">
-      <button class="primary" id="scrapeBtn">Jetzt Abrufen</button>
-      <button id="ihkBtn" hidden>Bei IHK einreichen</button>
-    </div>
-    <div id="status"></div>
+    <!-- ============ WOCHEN ============ -->
+    <section class="view active" id="view-week">
+      <div class="nav">
+        <button id="prev" title="Woche zurück">←</button>
+        <select id="weekSelect"></select>
+        <button id="next" title="Woche vor">→</button>
+      </div>
+      <div class="meta"><span id="weekMeta"></span> <span id="ihkBadge"></span></div>
 
-    <div id="content"><div class="placeholder">Lade…</div></div>
+      <div class="actions">
+        <button class="primary" id="scrapeBtn">Jetzt Abrufen</button>
+        <button id="ihkBtn" hidden>Bei IHK einreichen</button>
+      </div>
+      <div id="status"></div>
+
+      <div id="content"><div class="placeholder">Lade…</div></div>
+    </section>
+
+    <!-- ============ DATENIMPORT ============ -->
+    <section class="view" id="view-import">
+      <h1 class="page-title">Datenimport</h1>
+
+      <div class="section">
+        <h2>WebUntis – Wochen abrufen</h2>
+        <p class="section-desc">Ruft mehrere vergangene Wochen auf einmal von WebUntis ab.</p>
+        <div class="form-group">
+          <label for="startDate">Von (z.B. 01.08.2026):</label>
+          <input type="text" id="startDate" placeholder="01.08.2026">
+        </div>
+        <div class="form-group">
+          <label for="endDate">Bis (z.B. 09.08.2026):</label>
+          <input type="text" id="endDate" placeholder="09.08.2026">
+        </div>
+        <button id="bulkScrapeBtn">Alle Wochen abrufen</button>
+        <button type="button" id="endDateTodayBtn" class="secondary">Bis heute</button>
+        <div id="scrapeStatus"></div>
+      </div>
+
+      <div class="section">
+        <h2>IHK – Historie abrufen</h2>
+        <p class="section-desc">Kopiert alle vorhandenen Einträge von der IHK-Plattform lokal in die App.</p>
+        <button id="backfillBtn">IHK-Historie abrufen</button>
+        <div id="backfillStatus"></div>
+      </div>
+    </section>
+
+    <!-- ============ EINSTELLUNGEN ============ -->
+    <section class="view" id="view-settings">
+      <h1 class="page-title">Einstellungen</h1>
+
+      <!-- Konto -->
+      <form class="settings-group" id="passwordForm">
+        <h2>Konto</h2>
+        <p class="group-desc">Dein Anmeldepasswort für diese App.</p>
+        <div id="account-msg" class="message"></div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="current_password">Aktuelles Passwort</label>
+            <input type="password" id="current_password" required>
+          </div>
+          <div class="form-group">
+            <label for="new_password">Neues Passwort</label>
+            <input type="password" id="new_password" required>
+          </div>
+        </div>
+        <button type="submit"><span class="spinner"></span>Passwort ändern</button>
+      </form>
+
+      <!-- WebUntis (Quelle) -->
+      <form class="settings-group" id="untisForm">
+        <h2>WebUntis</h2>
+        <p class="group-desc">Zugangsdaten zur Schule – die Quelle für den Berufsschul-Lehrstoff.</p>
+        <div id="untis-msg" class="message"></div>
+        <div class="form-group">
+          <label for="untis_host">Host</label>
+          <input type="text" id="untis_host" placeholder="z.B. example.webuntis.com">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="untis_user">Benutzername</label>
+            <input type="text" id="untis_user" placeholder="WebUntis-Benutzername">
+          </div>
+          <div class="form-group">
+            <label for="untis_pass">Passwort</label>
+            <input type="password" id="untis_pass" placeholder="WebUntis-Passwort">
+            <div class="password-note">Leer lassen, um das vorhandene Passwort zu behalten</div>
+          </div>
+        </div>
+        <div class="button-group">
+          <button type="submit"><span class="spinner"></span>WebUntis speichern</button>
+          <button type="button" class="secondary" id="testUntisBtn">Verbindung testen</button>
+        </div>
+      </form>
+
+      <!-- Berichtsheft (Start + Zeitplan zusammen) -->
+      <form class="settings-group" id="scraperForm">
+        <h2>Berichtsheft</h2>
+        <p class="group-desc">Ab wann das Berichtsheft beginnt und wann automatisch abgerufen wird.</p>
+        <div id="scraper-msg" class="message"></div>
+        <div class="form-group">
+          <label for="start_date">Erster Tag der Ausbildung</label>
+          <input type="date" id="start_date">
+          <small>Wochen vor diesem Datum werden nicht angezeigt und können nicht abgerufen werden.</small>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="scrape_day">Automatisch abrufen am</label>
+            <select id="scrape_day">
+              <option value="off">Aus (nur manuell)</option>
+              <option value="mon">Montag</option>
+              <option value="tue">Dienstag</option>
+              <option value="wed">Mittwoch</option>
+              <option value="thu">Donnerstag</option>
+              <option value="fri">Freitag</option>
+              <option value="sat">Samstag</option>
+              <option value="sun">Sonntag</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="scrape_time">Uhrzeit (24-Stunden)</label>
+            <input type="time" id="scrape_time" value="18:00">
+          </div>
+        </div>
+        <button type="submit"><span class="spinner"></span>Berichtsheft speichern</button>
+      </form>
+
+      <!-- IHK (Ziel) -->
+      <form class="settings-group" id="ihkForm">
+        <h2>IHK</h2>
+        <p class="group-desc">Zugangsdaten zum IHK-Portal – das Ziel, an das eingereicht wird.</p>
+        <div id="ihk-msg" class="message"></div>
+        <div class="form-group">
+          <label for="ihk_host">Host</label>
+          <input type="text" id="ihk_host" placeholder="z.B. www.bildung-ihk-nordwestfalen.de (kein https://)">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="ihk_user">Benutzername</label>
+            <input type="text" id="ihk_user" placeholder="IHK-Benutzername">
+          </div>
+          <div class="form-group">
+            <label for="ihk_pass">Passwort</label>
+            <input type="password" id="ihk_pass" placeholder="IHK-Passwort">
+            <div class="password-note">Leer lassen, um das vorhandene Passwort zu behalten</div>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="ihk_ausbabschnitt">Ausbildungsabschnitt</label>
+            <input type="text" id="ihk_ausbabschnitt" placeholder="z.B. 1">
+          </div>
+          <div class="form-group">
+            <label for="ihk_ausb_mail">Ausbilder E-Mail</label>
+            <input type="email" id="ihk_ausb_mail" placeholder="ausbilder@example.com">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="checkbox-label">
+            <input type="checkbox" id="ihk_use_settings" checked>
+            Diese Werte immer verwenden (nicht pro Woche abfragen)
+          </label>
+          <small>Deaktivieren, um Ausbildungsabschnitt und Ausbilder-E-Mail für jede Wocheneinreichung einzeln anzugeben.</small>
+        </div>
+        <div class="button-group">
+          <button type="submit"><span class="spinner"></span>IHK speichern</button>
+          <button type="button" class="secondary" id="testIhkBtn">Verbindung testen</button>
+        </div>
+      </form>
+
+      <!-- Admin (nur Admins) -->
+      <div class="settings-group admin-only">
+        <h2>Administration</h2>
+        <p class="group-desc">Benutzerverwaltung.</p>
+        <div id="admin-msg" class="message"></div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="new_user_name">Benutzername</label>
+            <input type="text" id="new_user_name">
+          </div>
+          <div class="form-group">
+            <label for="new_user_pass">Passwort</label>
+            <input type="password" id="new_user_pass">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="checkbox-label">
+            <input type="checkbox" id="new_user_admin">
+            Als Admin festlegen
+          </label>
+        </div>
+        <button type="button" id="createUserBtn"><span class="spinner"></span>Benutzer erstellen</button>
+
+        <table class="users-table" id="usersTable">
+          <thead>
+            <tr><th>ID</th><th>Benutzername</th><th>Rolle</th><th>Erstellt</th></tr>
+          </thead>
+          <tbody id="usersTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ============ HILFE ============ -->
+    <section class="view" id="view-help">
+      <h1 class="page-title">Hilfe</h1>
+
+      <div class="help-section">
+        <h2><span class="help-icon">🧭</span>Navigation</h2>
+        <p>Die App hat vier Bereiche, die du jederzeit über die Seitenleiste links erreichst – die Seite lädt dabei nicht neu:</p>
+        <ul>
+          <li><strong>📅 Wochen</strong> – die Standardansicht: Lehrstoff pro Woche ansehen und an die IHK einreichen.</li>
+          <li><strong>Datenimport</strong> – viele vergangene Wochen auf einmal abrufen und die IHK-Historie kopieren.</li>
+          <li><strong>⚙ Einstellungen</strong> – alle Zugangsdaten und Einstellungen auf einer Seite.</li>
+          <li><strong>❔ Hilfe</strong> – diese Seite.</li>
+        </ul>
+        <p>Auf dem Handy ist die Seitenleiste eingeklappt. Tippe oben links auf <strong>☰</strong>, um sie zu öffnen; ein Tipp daneben schließt sie wieder.</p>
+      </div>
+
+      <div class="help-section">
+        <h2><span class="help-icon">📅</span>Wochen ansehen &amp; einreichen</h2>
+        <p>Mit <code>←</code> / <code>→</code> oder dem Dropdown wechselst du die Woche. Zukünftige Wochen sind nicht wählbar; nach hinten reicht es bis zum in den Einstellungen gesetzten ersten Tag.</p>
+        <h3>Daten abrufen</h3>
+        <p>Ist für eine Woche noch nichts geladen, tippe auf <strong>Jetzt Abrufen</strong> – der Lehrstoff wird aus WebUntis geholt und unter „Berufsschule“ als fertiger Text angezeigt.</p>
+        <h3>An die IHK einreichen</h3>
+        <p>Ist die Woche zum Einreichen an der Reihe, erscheinen zwei Felder:</p>
+        <ul>
+          <li><strong>Betriebliche Tätigkeiten</strong> und <strong>Unterweisungen / betrieblicher Unterricht</strong> – hier trägst du selbst ein, was im Betrieb war. Die Felder sind bewusst immer leer; es wird nichts aus der IHK zurückgeladen.</li>
+          <li>Der Berufsschul-Text wird automatisch mitgeschickt.</li>
+        </ul>
+        <p>Mit <strong>Bei IHK einreichen</strong> wird der Eintrag im IHK-Portal gespeichert. Es wird nur gespeichert – niemals automatisch „Speichern &amp; Senden“; das Absenden zur Genehmigung machst du weiterhin selbst im Portal. Wochen müssen der Reihe nach eingereicht werden; genehmigte Wochen sind gesperrt.</p>
+      </div>
+
+      <div class="help-section">
+        <h2><span class="help-icon">⬇</span>Datenimport</h2>
+        <p><strong>Wochen abrufen:</strong> Gib einen Zeitraum im Format <code>tt.mm.jjjj</code> ein (der Button „Bis heute“ füllt das Enddatum) und rufe alle Wochen dazwischen auf einmal ab – praktisch beim ersten Einrichten.</p>
+        <p><strong>IHK-Historie abrufen:</strong> Kopiert alle bereits im IHK-Portal vorhandenen Einträge lokal in die App, damit ihr Status hier korrekt angezeigt wird.</p>
+      </div>
+
+      <div class="help-section">
+        <h2><span class="help-icon">⚙</span>Einstellungen</h2>
+        <p>Alle Einstellungen stehen untereinander auf einer Seite. Jede Gruppe wird mit ihrem eigenen Speichern-Knopf gesichert:</p>
+        <ul>
+          <li><strong>Konto</strong> – Anmeldepasswort dieser App ändern.</li>
+          <li><strong>WebUntis</strong> – Zugangsdaten zur Schule (die Quelle des Lehrstoffs). Mit „Verbindung testen“ prüfbar.</li>
+          <li><strong>Berichtsheft</strong> – der <em>erste Tag der Ausbildung</em> (Wochen davor werden ausgeblendet) und der automatische Abrufplan (Wochentag + Uhrzeit, oder „Aus“).</li>
+          <li><strong>IHK</strong> – Zugangsdaten zum IHK-Portal, Ausbildungsabschnitt und Ausbilder-E-Mail. Die Werte können fest hinterlegt oder pro Woche einzeln abgefragt werden.</li>
+          <li><strong>Administration</strong> – nur für Admins: weitere Benutzer anlegen und verwalten.</li>
+        </ul>
+        <p>Passwortfelder leer lassen behält das gespeicherte Passwort.</p>
+      </div>
+    </section>
+
   </div>
 </main>
 
-<script>
-// Auth guard
-(async () => {
-  try {
-    const res = await fetch('/api/auth/whoami');
-    if (res.status === 401) {
-      window.location.href = '/login.html';
-      throw new Error('Not authenticated');
-    }
-  } catch (err) {
-    window.location.href = '/login.html';
-    return;
-  }
-})();
-
-function expandSidebar(event) {
-  event.stopPropagation();
-  const sidebar = document.getElementById('sidebar');
-  sidebar.classList.remove('collapsed');
-  localStorage.setItem('sidebarCollapsed', 'false');
-}
-
-function collapseSidebar() {
-  const sidebar = document.getElementById('sidebar');
-  sidebar.classList.add('collapsed');
-  localStorage.setItem('sidebarCollapsed', 'true');
-}
-
-function toggleSidebar() {
-  const sidebar = document.getElementById('sidebar');
-  sidebar.classList.toggle('collapsed');
-  localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
-}
-
-function clearWeekCache() {
-  // week:*/scrapedAt:* are keyed only by week id, not by account - on a
-  // shared browser a different user must never see a previous account's
-  // cached lesson content. See ensureCacheOwnership() for when this runs.
-  for (const key of Object.keys(localStorage)) {
-    if (key.startsWith('week:') || key.startsWith('scrapedAt:')) {
-      localStorage.removeItem(key);
-    }
-  }
-}
-
-async function ensureCacheOwnership() {
-  const res = await fetch('/api/auth/whoami');
-  if (!res.ok) return; // auth guard already redirects to /login.html
-  const { username } = await res.json();
-  if (localStorage.getItem('cacheOwner') !== username) {
-    clearWeekCache();
-    localStorage.setItem('cacheOwner', username);
-  }
-}
-
-function logout() {
-  clearWeekCache();
-  localStorage.removeItem('cacheOwner');
-  fetch('/api/auth/logout', { method: 'POST' }).then(() => {
-    window.location.href = '/login.html';
-  });
-}
-
-// Restore sidebar state
-if (localStorage.getItem('sidebarCollapsed') === 'true') {
-  document.getElementById('sidebar').classList.add('collapsed');
-}
-
-const $ = (id) => document.getElementById(id);
-let weeks = [];
-let selected = null;
-let currentWeek = null;
-let startWeek = null;
-let ihkStatus = {};
-let ihkHistory = {};
-let ihkFieldsCache = {};
-let ihkFields = { ausbinhalt1: "", ausbinhalt2: "" };
-let weekText = "";
-let ihkUseSettingsForAbschnitt = true;
-const IHK_BADGE_LABELS = {
-  "genehmigt": ["genehmigt", "genehmigt"],
-  "in_bearbeitung": ["in Bearbeitung", "in-bearbeitung"],
-  "warten_auf_genehmigung": ["warten auf Genehmigung", "warten-auf-genehmigung"],
-  "abgelehnt": ["abgelehnt", "abgelehnt"],
-};
-
-function weekBounds(id) {
-  const [y, w] = id.split("-W").map(Number);
-  const jan4 = new Date(Date.UTC(y, 0, 4));
-  const monday = new Date(jan4);
-  monday.setUTCDate(jan4.getUTCDate() - ((jan4.getUTCDay() + 6) % 7) + (w - 1) * 7);
-  const sunday = new Date(monday); sunday.setUTCDate(monday.getUTCDate() + 6);
-  return [monday.toISOString().slice(0, 10), sunday.toISOString().slice(0, 10)];
-}
-
-function shiftWeek(id, delta) {
-  const [start] = weekBounds(id);
-  const d = new Date(start + "T12:00:00Z");
-  d.setUTCDate(d.getUTCDate() + delta * 7);
-  const t = new Date(d); t.setUTCDate(t.getUTCDate() + 3);
-  const isoYear = t.getUTCFullYear();
-  const jan4 = new Date(Date.UTC(isoYear, 0, 4));
-  const week1Mon = new Date(jan4); week1Mon.setUTCDate(jan4.getUTCDate() - ((jan4.getUTCDay() + 6) % 7));
-  const wk = Math.round((d - week1Mon) / (7 * 864e5)) + 1;
-  return `${isoYear}-W${String(wk).padStart(2, "0")}`;
-}
-
-function fmtShort(iso) { const [y,m,d] = iso.split("-"); return `${d}.${m}.`; }
-
-const WEEKDAYS_DE = ["Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"];
-function fmtDayHeading(iso) {
-  const [y, m, d] = iso.split("-").map(Number);
-  const weekday = WEEKDAYS_DE[new Date(Date.UTC(y, m - 1, d)).getUTCDay()];
-  return `${weekday}, ${fmtShort(iso)}`;
-}
-
-function nextSubmittableWeek() {
-  const known = Object.keys(ihkStatus);
-  if (!known.length) return null;
-  return shiftWeek([...known].sort().at(-1), 1);
-}
-
-function renderIhkBadge() {
-  const badge = $("ihkBadge");
-  const entry = ihkStatus[selected];
-  const mapped = entry && IHK_BADGE_LABELS[entry.status];
-  if (!mapped) {
-    badge.textContent = "";
-    badge.className = "";
-    return;
-  }
-  const [label, cls] = mapped;
-  badge.textContent = `· IHK: ${label}`;
-  badge.className = cls;
-}
-
-function setStatus(msg, cls = "") { const s = $("status"); s.textContent = msg; s.className = cls; }
-
-function renderSelect() {
-  const all = new Set(weeks);
-  all.add(selected);
-  const today = new Date().toISOString().slice(0, 10);
-  const sorted = [...all].sort().filter(w => {
-    const [s, e] = weekBounds(w);
-    return s <= today && (!startWeek || w >= startWeek);
-  });
-  $("weekSelect").innerHTML = sorted.map((w) => {
-    const [s, e] = weekBounds(w);
-    const label = `${w} (${fmtShort(s)} – ${fmtShort(e)})${weeks.includes(w) ? "" : " · keine Daten"}`;
-    return `<option value="${w}" ${w === selected ? "selected" : ""}>${label}</option>`;
-  }).join("");
-}
-
-function formattedText(data) {
-  const bySubject = new Map();
-  for (const day of data.days) {
-    for (const l of day.lessons) {
-      if (!l.content) continue;
-      const key = l.subjectLong || l.subject;
-      bySubject.set(key, (bySubject.get(key) || "") + l.content + "\n");
-    }
-  }
-  return [...bySubject.entries()].map(([k, v]) => k + ": " + v).join("\n");
-}
-
-function loadWeek(wid) {
-  selected = wid;
-  renderSelect();
-
-  // Can navigate forward up to the latest (current) ISO week, never past
-  // it - there's nothing to show beyond "now". Set unconditionally here
-  // (not inside renderWeek(), which has early returns for no-data weeks
-  // that would skip it) so the cap holds no matter what the selected
-  // week contains. Same reasoning for the backward cap at the user's
-  // configured Berichtsheft start date (Settings > Scraper).
-  $("next").disabled = !currentWeek || selected >= currentWeek;
-  $("prev").disabled = !!startWeek && selected <= startWeek;
-
-  const cached = ihkFieldsCache[wid];
-  ihkFields = { ausbinhalt1: cached?.ausbinhalt1 ?? "", ausbinhalt2: cached?.ausbinhalt2 ?? "" };
-
-  const data = JSON.parse(localStorage.getItem(`week:${wid}`));
-  renderIhkBadge();
-  if (data) {
-    renderWeek(data, wid);
-  } else {
-    $("content").innerHTML = `<div class="placeholder">Noch keine Daten für diese Woche.</div>`;
-  }
-}
-
-function renderWeek(data, wid) {
-  const el = $("content");
-  const [s, e] = weekBounds(wid);
-  $("weekMeta").textContent = weekBounds(wid).join(" – ") + " · Abgerufen am: " + (weeks.includes(wid) ? new Date(localStorage.getItem(`scrapedAt:${wid}`)).toLocaleString() : "—");
-
-  const days = data.days;
-  const noSchedule = data.holiday || data.schoolYearBoundary || data.allCancelled;
-
-  if (!noSchedule && !days.length) {
-    el.innerHTML = `<div class="placeholder">Keine Stunden in dieser Woche gefunden.</div>`;
-    return;
-  }
-
-  weekText = data.holiday
-    ? "Schulferien"
-    : data.schoolYearBoundary
-    ? "Wahrscheinlich Schuljahrwechsel"
-    : data.allCancelled
-    ? "Alle Stunden abgesagt"
-    : formattedText(data);
-  const text = weekText;
-
-  const ihkEntry = ihkStatus[wid];
-  const nextWeek = nextSubmittableWeek();
-  let ihkState, ihkReason;
-
-  if (wid > currentWeek) {
-    ihkState = "hidden";
-  } else if (ihkEntry) {
-    if (ihkEntry.status === "genehmigt") {
-      ihkState = "hidden";
-      $("scrapeBtn").hidden = true;
-    } else if (ihkEntry.status === "warten_auf_genehmigung") {
-      ihkState = "disabled";
-      ihkReason = "Wartet auf Genehmigung durch Betreuer";
-      $("scrapeBtn").hidden = false;
-    } else {
-      ihkState = "enabled";
-      $("scrapeBtn").hidden = false;
-    }
-  } else if (wid === nextWeek || (nextWeek === null && wid === currentWeek)) {
-    ihkState = "enabled";
-    $("scrapeBtn").hidden = false;
-  } else if (nextWeek && wid > nextWeek) {
-    ihkState = "disabled";
-    ihkReason = `Zuerst ${nextWeek} einreichen`;
-    $("scrapeBtn").hidden = false;
-  } else {
-    ihkState = "hidden";
-    $("scrapeBtn").hidden = false;
-  }
-
-  el.innerHTML = noSchedule ? "" : days.map((d) => `<div class="day"><h2>${fmtDayHeading(d.date)}</h2>${d.lessons.map((l) => `<div class="lesson"><div class="head"><span class="subj">${l.subjectLong || l.subject}</span><span class="meta">${l.start}–${l.end}${l.teacher ? " · " + l.teacher : ""}</span></div>` + (l.content ? `<div class="content">${l.content}</div>` : `<div class="empty">(kein Inhalt)</div>`) + `</div>`).join("")}</div>`).join("");
-
-  if (text) {
-    const showForm = ihkState !== "hidden";
-    const hist = !showForm ? ihkHistory[wid] : null;
-    el.insertAdjacentHTML("afterbegin", `
-      <div class="summary ihk-form">
-        ${showForm ? `
-          <h2>Bei IHK einreichen</h2>
-          <label for="ihkField1">Betriebliche Tätigkeiten</label>
-          <textarea id="ihkField1" rows="4"></textarea>
-          <label for="ihkField2">Unterweisungen, betrieblicher Unterricht, sonstige Schulungen</label>
-          <textarea id="ihkField2" rows="4"></textarea>
-          ${!ihkUseSettingsForAbschnitt ? `
-            <label for="ihkAbschnitt">Ausbildungsabschnitt</label>
-            <input type="text" id="ihkAbschnitt" placeholder="z.B. 1">
-            <label for="ihkAusbMail">Ausbilder Mail</label>
-            <input type="email" id="ihkAusbMail" placeholder="ausbilder@example.com">
-          ` : ''}
-          <label for="berufsschuleText">Berufsschule</label>
-        ` : hist ? `
-          <h2>IHK Eintrag</h2>
-          <label>Betriebliche Tätigkeiten</label>
-          <pre id="ihkHist1"></pre>
-          <label>Unterweisungen, betrieblicher Unterricht, sonstige Schulungen</label>
-          <pre id="ihkHist2"></pre>
-          <label for="berufsschuleText">Berufsschule</label>
-        ` : `<h2>Berufsschule</h2>`}
-        <pre id="berufsschuleText"></pre>
-      </div>`);
-
-    $("berufsschuleText").textContent = text;
-    if (showForm) {
-      $("ihkField1").value = ihkFields.ausbinhalt1;
-      $("ihkField2").value = ihkFields.ausbinhalt2;
-    } else if (hist) {
-      $("ihkHist1").textContent = hist.ausbinhalt1 || "–";
-      $("ihkHist2").textContent = hist.ausbinhalt2 || "–";
-    }
-
-    if (text && ihkState !== "hidden") {
-      const btn = $("ihkBtn");
-      btn.hidden = false;
-      btn.disabled = ihkState === "disabled";
-      btn.title = ihkReason || "";
-    } else {
-      $("ihkBtn").hidden = true;
-    }
-  }
-}
-
-async function refreshIhkStatus() {
-  const res = await fetch("/api/ihk-status");
-  const data = res.ok ? await res.json() : { status: {}, fields: {} };
-  ihkStatus = data.status || {};
-  ihkFieldsCache = data.fields || {};
-}
-
-async function refreshIhkHistory() {
-  const res = await fetch("/api/ihk-history");
-  ihkHistory = res.ok ? await res.json() : {};
-}
-
-async function loadUserSettings() {
-  try {
-    const res = await fetch("/api/me/settings");
-    const settings = await res.json();
-    ihkUseSettingsForAbschnitt = settings.ihk_use_settings_for_abschnitt !== false;
-  } catch (err) {
-    console.error("Failed to load user settings:", err);
-  }
-}
-
-async function init() {
-  try {
-    await ensureCacheOwnership();
-    const res = await fetch("/api/weeks");
-    const json = await res.json();
-    weeks = json.weeks;
-    currentWeek = json.current;
-    startWeek = json.startWeek;
-    selected = currentWeek;
-    renderSelect();
-
-    for (const wk of weeks) {
-      const weekData = await fetch(`/api/weeks/${wk}`).then(r => r.json());
-      localStorage.setItem(`week:${wk}`, JSON.stringify(weekData));
-      localStorage.setItem(`scrapedAt:${wk}`, new Date().toISOString());
-    }
-
-    await refreshIhkStatus();
-    await refreshIhkHistory();
-    await loadUserSettings();
-    loadWeek(selected);
-  } catch (err) { setStatus("Fehler: " + err.message, "err"); }
-}
-
-$("prev").onclick = () => { selected = shiftWeek(selected, -1); loadWeek(selected); };
-$("next").onclick = () => { selected = shiftWeek(selected, +1); loadWeek(selected); };
-$("weekSelect").onchange = (e) => loadWeek(e.target.value);
-$("scrapeBtn").onclick = async () => {
-  const btn = $("scrapeBtn");
-  btn.disabled = true;
-  setStatus("Daten werden abgerufen…");
-  try {
-    const res = await fetch("/api/scrape", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({week: selected}) });
-    if (res.ok) {
-      const data = await res.json();
-      localStorage.setItem(`week:${data.week}`, JSON.stringify(data));
-      localStorage.setItem(`scrapedAt:${data.week}`, new Date().toISOString());
-      if (!weeks.includes(data.week)) weeks.push(data.week);
-      renderSelect();
-      await refreshIhkStatus();
-      loadWeek(selected);
-      setStatus("Abgerufen", "ok");
-    } else {
-      const err = await res.json();
-      setStatus("Fehler: " + (err.detail || err.message || "Abrufen fehlgeschlagen"), "err");
-    }
-  } catch (err) { setStatus("Fehler: " + err.message, "err"); }
-  finally { btn.disabled = false; }
-};
-
-$("ihkBtn").onclick = async () => {
-  const field1 = $("ihkField1");
-  const field2 = $("ihkField2");
-  if (!field1 || !field2) {
-    setStatus("Fehler: Formular nicht verfügbar (Woche gewechselt)", "err");
-    return;
-  }
-
-  const btn = $("ihkBtn");
-  btn.disabled = true;
-  setStatus(`Übertrage ${selected} an IHK…`);
-  try {
-    const text = weekText;
-    const val1 = field1.value.trim();
-    const val2 = field2.value.trim();
-    const ausbinhalt1 = val1 ? val1 : null;
-    const ausbinhalt2 = val2 ? val2 : null;
-
-    const payload = { week: selected, text, ausbinhalt1, ausbinhalt2 };
-
-    if (!ihkUseSettingsForAbschnitt) {
-      const abschnittField = $("ihkAbschnitt");
-      const ausbMailField = $("ihkAusbMail");
-      if (!abschnittField || !ausbMailField) {
-        setStatus("Fehler: Ausbildungsabschnitt und Ausbilder Mail erforderlich", "err");
-        btn.disabled = false;
-        return;
-      }
-      payload.ihk_abschnitt_override = abschnittField.value.trim();
-      payload.ihk_ausb_mail_override = ausbMailField.value.trim();
-    }
-
-    const res = await fetch("/api/submit-ihk", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
-
-    const body = await res.json();
-    if (!res.ok) throw new Error(body.detail || res.statusText);
-    setStatus("Bei IHK gespeichert.", "ok");
-    await refreshIhkStatus();
-    await refreshIhkHistory();
-    loadWeek(selected);
-  } catch (e) {
-    setStatus("Fehler: " + e.message, "err");
-    btn.disabled = false;
-  }
-};
-
-init();
-</script>
+<script type="module" src="/js/app.js"></script>
+<script type="module" src="/js/week.js"></script>
+<script type="module" src="/js/settings.js"></script>
+<script type="module" src="/js/bulkops.js"></script>
 
 </body>
 </html>
