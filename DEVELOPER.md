@@ -379,6 +379,8 @@ guess at the portal's own status label.
 `backfill_ihk_history.py` below) — `{}` if never run. Not kept in sync
 automatically.
 
+**`GET /api/ihk-entry/{week_id}`** → `{ausbinhalt1, ausbinhalt2}` for that week's existing IHK entry, or `null` if the week has no entry. Live, READ-ONLY fetch from the portal (`ihk_submitter.fetch_week_fields`) — the only path that reads IHK content back, used to pre-fill the editable boxes on a manual 'Jetzt Abrufen' so the user updates rather than blind-overwrites existing content. 400 on a malformed week id. Best-effort: any other failure (IHK unconfigured, login/network error) returns `null`, never an error, so it can't break the scrape it's piggybacked on.
+
 **`POST /api/submit-ihk`** — `{week, text, ausbinhalt1?, ausbinhalt2?,
 ihk_abschnitt_override?, ihk_ausb_mail_override?}` → `{ok:true}`. 400 on a
 malformed week id or empty text. Per-user lock (`"submit"` kind); 409 if a

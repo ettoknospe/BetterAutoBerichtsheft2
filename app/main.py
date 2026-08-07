@@ -376,6 +376,25 @@ def ihk_history(user: auth.AuthedUser = Depends(auth.require_user)):
     settings = db._row_to_settings(settings_row, user_row)
     return ihk_submitter.load_history(settings=settings)
 
+@app.get("/api/ihk-entry/{week_id}")
+def ihk_entry(week_id: str, user: auth.AuthedUser = Depends(auth.require_user)):
+    """Live READ-ONLY fetch of a single week's existing IHK entry content,
+    so the UI can pre-fill the editable boxes on 'Jetzt Abrufen' instead of
+    letting the user blind-overwrite what is already on the portal. Returns
+    {ausbinhalt1, ausbinhalt2} or null. Best-effort: any failure (IHK not
+    configured, login/network error, no such entry) returns null, never an
+    error, so it can never break the action it is piggybacked on."""
+    if not WEEK_RE.match(week_id):
+        raise HTTPException(status_code=400, detail="bad week id, expected YYYY-Www")
+    user_row = db.get_user_by_id(user.id)
+    settings_row = db.get_user_settings(user.id)
+    settings = db._row_to_settings(settings_row, user_row)
+    try:
+        return ihk_submitter.fetch_week_fields(week_id, settings=settings)
+    except Exception as e:
+        log.warning("IHK entry fetch failed (non-fatal): %s", e)
+        return None
+
 @app.post("/api/submit-ihk")
 def submit_ihk(req: SubmitIhkRequest, user: auth.AuthedUser = Depends(auth.require_user)):
     """Submit entry to IHK."""

@@ -69,7 +69,25 @@ function renderIhkBadge() {
   badge.className = cls;
 }
 
-function setStatus(msg, cls = "") { const s = $("status"); s.textContent = msg; s.className = cls; }
+let statusTimer = null;
+function setStatus(msg, cls = "") {
+  clearTimeout(statusTimer);
+  const s = $("status");
+  s.textContent = msg;
+  s.className = cls;
+  // Auto-dismiss finished notifications ("ok"/"err") after a few seconds.
+  // In-progress messages (no class, e.g. "Daten werden abgerufen…") are left
+  // until their result replaces them.
+  if (cls === "ok" || cls === "err") {
+    statusTimer = setTimeout(() => { s.textContent = ""; s.className = ""; }, cls === "err" ? 7000 : 4000);
+  }
+}
+function clearStatus() {
+  clearTimeout(statusTimer);
+  const s = $("status");
+  s.textContent = "";
+  s.className = "";
+}
 
 function renderSelect() {
   const all = new Set(weeks);
@@ -244,6 +262,39 @@ async function loadUserSettings() {
   }
 }
 
+// After a manual "Jetzt Abrufen", pull this week's existing IHK entry (if
+// any) so the two editable boxes show what is already on the portal - lets
+// the user update rather than blind-overwrite it. READ-ONLY; best-effort;
+// never clobbers text the user has already started typing, and bails if the
+// user navigated to another week mid-fetch.
+async function prefillFromIhk(wid) {
+  // Returns true if an existing IHK entry with content was found (and, if the
+  // user is still on this week, filled into the boxes). Reports no status
+  // itself - the scrape flow owns the messaging. Never throws: if IHK isn't
+  // configured, or login/network fails, it just returns false.
+  try {
+    const res = await authFetch(`/api/ihk-entry/${wid}`);
+    if (!res.ok) return false;
+    const data = await res.json();
+    if (!data || (!data.ausbinhalt1 && !data.ausbinhalt2)) return false;
+    // remember it so re-rendering this week later keeps the content
+    ihkFieldsCache[wid] = {
+      ausbinhalt1: data.ausbinhalt1 || "",
+      ausbinhalt2: data.ausbinhalt2 || "",
+    };
+    if (selected === wid) { // still on this week - fill the boxes now
+      ihkFields = { ...ihkFieldsCache[wid] };
+      const f1 = $("ihkField1"), f2 = $("ihkField2");
+      // only fill boxes the user has not already started typing into
+      if (f1 && f1.value.trim() === "" && ihkFields.ausbinhalt1) f1.value = ihkFields.ausbinhalt1;
+      if (f2 && f2.value.trim() === "" && ihkFields.ausbinhalt2) f2.value = ihkFields.ausbinhalt2;
+    }
+    return true;
+  } catch (e) {
+    return false; // best-effort; leave boxes untouched on any failure
+  }
+}
+
 async function init() {
   try {
     const res = await authFetch("/api/weeks");
@@ -267,30 +318,44 @@ async function init() {
   } catch (err) { setStatus("Fehler: " + err.message, "err"); }
 }
 
-$("prev").onclick = () => { selected = shiftWeek(selected, -1); loadWeek(selected); };
-$("next").onclick = () => { selected = shiftWeek(selected, +1); loadWeek(selected); };
-$("weekSelect").onchange = (e) => loadWeek(e.target.value);
+$("prev").onclick = () => { clearStatus(); selected = shiftWeek(selected, -1); loadWeek(selected); };
+$("next").onclick = () => { clearStatus(); selected = shiftWeek(selected, +1); loadWeek(selected); };
+$("weekSelect").onchange = (e) => { clearStatus(); loadWeek(e.target.value); };
 $("scrapeBtn").onclick = async () => {
   const btn = $("scrapeBtn");
+  const wid = selected; // pin the week so a mid-run switch can't misattribute
   btn.disabled = true;
-  setStatus("Daten werden abgerufen…");
+  // Two visible stages so a green "done" box never shows before everything is
+  // actually finished: (1) WebUntis scrape, then (2) IHK read-back.
+  setStatus("Schritt 1/2: WebUntis wird abgerufen…");
   try {
-    const res = await authFetch("/api/scrape", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ week: selected }) });
-    if (res.ok) {
-      const data = await res.json();
-      localStorage.setItem(`week:${data.week}`, JSON.stringify(data));
-      localStorage.setItem(`scrapedAt:${data.week}`, new Date().toISOString());
-      if (!weeks.includes(data.week)) weeks.push(data.week);
-      renderSelect();
-      await refreshIhkStatus();
-      loadWeek(selected);
-      setStatus("Abgerufen", "ok");
-    } else {
+    const res = await authFetch("/api/scrape", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ week: wid }) });
+    if (!res.ok) {
       const err = await res.json();
       setStatus("Fehler: " + (err.detail || err.message || "Abrufen fehlgeschlagen"), "err");
+      return;
     }
-  } catch (err) { setStatus("Fehler: " + err.message, "err"); }
-  finally { btn.disabled = false; }
+    const data = await res.json();
+    localStorage.setItem(`week:${data.week}`, JSON.stringify(data));
+    localStorage.setItem(`scrapedAt:${data.week}`, new Date().toISOString());
+    if (!weeks.includes(data.week)) weeks.push(data.week);
+    renderSelect();
+    await refreshIhkStatus();
+    loadWeek(selected);
+    // Stage 2: check IHK for an existing entry. Non-fatal and silent if IHK
+    // isn't configured - prefillFromIhk swallows all failures -> "abgerufen".
+    setStatus("Schritt 2/2: IHK-Eintrag wird geprüft…");
+    const loaded = await prefillFromIhk(wid);
+    if (selected === wid) { // skip the final toast if the user moved on
+      setStatus(loaded
+        ? "Fertig – bestehender IHK-Eintrag geladen, vor dem Einreichen prüfen"
+        : "Fertig – abgerufen", "ok");
+    }
+  } catch (err) {
+    setStatus("Fehler: " + err.message, "err");
+  } finally {
+    btn.disabled = false;
+  }
 };
 
 $("ihkBtn").onclick = async () => {

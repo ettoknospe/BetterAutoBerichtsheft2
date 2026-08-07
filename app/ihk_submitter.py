@@ -120,6 +120,29 @@ def load_history(settings: UserSettings | None = None) -> dict:
     return storage.load_ihk_history(settings.user_id)
 
 
+def fetch_week_fields(week_id: str, settings: UserSettings | None = None) -> dict | None:
+    """Live, READ-ONLY fetch of one week's existing IHK entry content
+    (ausbinhalt1/ausbinhalt2), so the UI can show what is already on the
+    portal before the user overwrites it via a submit. This is the ONE place
+    the app reads content back from IHK - it never writes. Returns
+    {"ausbinhalt1": str, "ausbinhalt2": str}, or None if the week has no
+    entry yet. Uses the same list_entries() week keying as submit_week()."""
+    settings = settings or UserSettings.from_config()
+    client = IhkClient(settings)
+    client.login()
+    try:
+        entry = client.list_entries().get(week_id)
+        if entry is None or entry.get("lfdnr") in (None, "0", 0):
+            return None
+        full = client.fetch_entry(entry["lfdnr"])
+        return {
+            "ausbinhalt1": full.get("ausbinhalt1", ""),
+            "ausbinhalt2": full.get("ausbinhalt2", ""),
+        }
+    finally:
+        client.logout()
+
+
 def submit_week(week_id: str, formatted_text: str, ausbinhalt1: str | None = None, ausbinhalt2: str | None = None, settings: UserSettings | None = None):
     """Find (or create, if it's the next sequential missing one) the IHK
     entry for week_id, and save formatted_text into its "Berufsschule"
