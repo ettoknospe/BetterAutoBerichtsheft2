@@ -27,7 +27,7 @@
 
   <nav class="sidebar-nav">
     <a href="#/week" data-route="week">
-      <span class="nav-icon">📅</span>
+      <img src="/calendar.svg" alt="" class="nav-icon nav-icon-img">
       <span class="nav-text">Wochen</span>
     </a>
     <a href="#/import" data-route="import">
@@ -39,7 +39,7 @@
       <span class="nav-text">Einstellungen</span>
     </a>
     <a href="#/help" data-route="help">
-      <span class="nav-icon">❔</span>
+      <img src="/help.svg" alt="" class="nav-icon nav-icon-img">
       <span class="nav-text">Hilfe</span>
     </a>
   </nav>
@@ -261,48 +261,53 @@
       <h1 class="page-title">Hilfe</h1>
 
       <div class="help-section">
-        <h2><span class="help-icon">🧭</span>Navigation</h2>
-        <p>Die App hat vier Bereiche, die du jederzeit über die Seitenleiste links erreichst – die Seite lädt dabei nicht neu:</p>
+        <h2><span class="help-icon">ℹ️</span>Was diese App macht</h2>
+        <p>Diese App nimmt dir das Ausfüllen des Berichtshefts ab. Sie liest den in <strong>WebUntis</strong> eingetragenen Lehrstoff deiner Berufsschule aus, formatiert ihn zu fertigem Berichtsheft-Text und trägt ihn auf Wunsch in das <strong>IHK-Portal</strong> ein.</p>
+        <h3>Was mit deinen Daten passiert</h3>
         <ul>
-          <li><strong>📅 Wochen</strong> – die Standardansicht: Lehrstoff pro Woche ansehen und an die IHK einreichen.</li>
-          <li><strong>Datenimport</strong> – viele vergangene Wochen auf einmal abrufen und die IHK-Historie kopieren.</li>
-          <li><strong>⚙ Einstellungen</strong> – alle Zugangsdaten und Einstellungen auf einer Seite.</li>
-          <li><strong>❔ Hilfe</strong> – diese Seite.</li>
+          <li>Die App läuft komplett auf <strong>diesem einen Server</strong> – keine fremden Dienste, keine Cloud dahinter.</li>
+          <li>Deine WebUntis- und IHK-Zugangsdaten werden <strong>verschlüsselt</strong> in einer lokalen Datenbank gespeichert und nur benutzt, um sich in deinem Namen bei WebUntis bzw. der IHK anzumelden.</li>
+          <li>Die Daten fließen <strong>nur in eine Richtung</strong>: von der App zur IHK. Aus der IHK wird nie etwas zurückgelesen oder verändert, und es wird <strong>nie automatisch „Speichern &amp; Senden"</strong> gedrückt – das Absenden zur Genehmigung machst du selbst.</li>
+          <li>Jeder Benutzer sieht nur seine eigenen Daten.</li>
         </ul>
-        <p>Auf dem Handy ist die Seitenleiste eingeklappt. Tippe oben links auf <strong>☰</strong>, um sie zu öffnen; ein Tipp daneben schließt sie wieder.</p>
+        <p>Kurz gesagt: Die App tippt für dich ab, was du sonst von Hand aus WebUntis in die IHK überträgst – nicht mehr und nicht weniger.</p>
       </div>
 
       <div class="help-section">
-        <h2><span class="help-icon">📅</span>Wochen ansehen &amp; einreichen</h2>
-        <p>Mit <code>←</code> / <code>→</code> oder dem Dropdown wechselst du die Woche. Zukünftige Wochen sind nicht wählbar; nach hinten reicht es bis zum in den Einstellungen gesetzten ersten Tag.</p>
-        <h3>Daten abrufen</h3>
-        <p>Ist für eine Woche noch nichts geladen, tippe auf <strong>Jetzt Abrufen</strong> – der Lehrstoff wird aus WebUntis geholt und unter „Berufsschule“ als fertiger Text angezeigt.</p>
-        <h3>An die IHK einreichen</h3>
-        <p>Ist die Woche zum Einreichen an der Reihe, erscheinen zwei Felder:</p>
-        <ul>
-          <li><strong>Betriebliche Tätigkeiten</strong> und <strong>Unterweisungen / betrieblicher Unterricht</strong> – hier trägst du selbst ein, was im Betrieb war. Die Felder sind bewusst immer leer; es wird nichts aus der IHK zurückgeladen.</li>
-          <li>Der Berufsschul-Text wird automatisch mitgeschickt.</li>
-        </ul>
-        <p>Mit <strong>Bei IHK einreichen</strong> wird der Eintrag im IHK-Portal gespeichert. Es wird nur gespeichert – niemals automatisch „Speichern &amp; Senden“; das Absenden zur Genehmigung machst du weiterhin selbst im Portal. Wochen müssen der Reihe nach eingereicht werden; genehmigte Wochen sind gesperrt.</p>
+        <h2><span class="help-icon">🔑</span>Einrichtung: die zwei Konten</h2>
+        <p>Damit es funktioniert, hinterlegst du einmalig deine <strong>zwei bestehenden Konten</strong> unter <strong>⚙ Einstellungen</strong>. Das sind dieselben Zugangsdaten, mit denen du dich sonst direkt bei WebUntis und der IHK anmeldest – du legst hier <em>keine</em> neuen Konten an.</p>
+
+        <h3>1. WebUntis (deine Schule)</h3>
+        <ol>
+          <li>Öffne <strong>⚙ Einstellungen → WebUntis</strong>.</li>
+          <li><strong>Host</strong>: die Adresse deiner WebUntis-Schule, z.&nbsp;B. <code>example.webuntis.com</code> (ohne <code>https://</code>). Steht in der Adresszeile, wenn du WebUntis im Browser öffnest.</li>
+          <li><strong>Benutzername</strong> und <strong>Passwort</strong>: deine gewohnten WebUntis-Anmeldedaten.</li>
+          <li>Mit <strong>Verbindung testen</strong> prüfen, dann <strong>WebUntis speichern</strong>.</li>
+        </ol>
+
+        <h3>2. IHK-Portal</h3>
+        <ol>
+          <li>Öffne <strong>⚙ Einstellungen → IHK</strong>.</li>
+          <li><strong>Host</strong>: die Adresse des IHK-Portals, z.&nbsp;B. <code>www.bildung-ihk-nordwestfalen.de</code> (ohne <code>https://</code>).</li>
+          <li><strong>Benutzername</strong> und <strong>Passwort</strong>: deine Anmeldedaten fürs IHK-Portal.</li>
+          <li><strong>Ausbildungsabschnitt</strong> und <strong>Ausbilder-E-Mail</strong> eintragen (findest du in deinem IHK-Berichtsheft).</li>
+          <li>Mit <strong>Verbindung testen</strong> prüfen, dann <strong>IHK speichern</strong>.</li>
+        </ol>
+
+        <h3>3. Ersten Tag festlegen</h3>
+        <p>Trage unter <strong>⚙ Einstellungen → Berichtsheft</strong> den <strong>ersten Tag deiner Ausbildung</strong> ein – Wochen davor werden ausgeblendet. Optional stellst du dort einen automatischen Abrufplan ein.</p>
+        <p>Fertig. Ab jetzt kannst du unter <strong>📅 Wochen</strong> abrufen und einreichen.</p>
       </div>
 
       <div class="help-section">
-        <h2><span class="help-icon">⬇</span>Datenimport</h2>
-        <p><strong>Wochen abrufen:</strong> Gib einen Zeitraum im Format <code>tt.mm.jjjj</code> ein (der Button „Bis heute“ füllt das Enddatum) und rufe alle Wochen dazwischen auf einmal ab – praktisch beim ersten Einrichten.</p>
-        <p><strong>IHK-Historie abrufen:</strong> Kopiert alle bereits im IHK-Portal vorhandenen Einträge lokal in die App, damit ihr Status hier korrekt angezeigt wird.</p>
-      </div>
-
-      <div class="help-section">
-        <h2><span class="help-icon">⚙</span>Einstellungen</h2>
-        <p>Alle Einstellungen stehen untereinander auf einer Seite. Jede Gruppe wird mit ihrem eigenen Speichern-Knopf gesichert:</p>
-        <ul>
-          <li><strong>Konto</strong> – Anmeldepasswort dieser App ändern.</li>
-          <li><strong>WebUntis</strong> – Zugangsdaten zur Schule (die Quelle des Lehrstoffs). Mit „Verbindung testen“ prüfbar.</li>
-          <li><strong>Berichtsheft</strong> – der <em>erste Tag der Ausbildung</em> (Wochen davor werden ausgeblendet) und der automatische Abrufplan (Wochentag + Uhrzeit, oder „Aus“).</li>
-          <li><strong>IHK</strong> – Zugangsdaten zum IHK-Portal, Ausbildungsabschnitt und Ausbilder-E-Mail. Die Werte können fest hinterlegt oder pro Woche einzeln abgefragt werden.</li>
-          <li><strong>Administration</strong> – nur für Admins: weitere Benutzer anlegen und verwalten.</li>
-        </ul>
-        <p>Passwortfelder leer lassen behält das gespeicherte Passwort.</p>
+        <h2><span class="help-icon">📅</span>So benutzt du es</h2>
+        <ol>
+          <li>Unter <strong>📅 Wochen</strong> die gewünschte Woche wählen.</li>
+          <li><strong>Jetzt Abrufen</strong> holt den Lehrstoff aus WebUntis und zeigt ihn als fertigen „Berufsschule"-Text.</li>
+          <li>Die Felder <strong>Betriebliche Tätigkeiten</strong> und <strong>Unterweisungen</strong> selbst ausfüllen (was im Betrieb war).</li>
+          <li><strong>Bei IHK einreichen</strong> speichert den Eintrag im IHK-Portal. Das endgültige Absenden zur Genehmigung machst du weiterhin selbst dort.</li>
+        </ol>
+        <p>Beim ersten Einrichten hilft <strong>Datenimport</strong>, viele vergangene Wochen auf einmal abzurufen.</p>
       </div>
     </section>
 
