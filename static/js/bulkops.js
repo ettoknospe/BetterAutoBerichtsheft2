@@ -27,6 +27,27 @@ function dateToWeek(date) {
   return `${d.getFullYear()}-W${String(weekNum).padStart(2, "0")}`;
 }
 
+function isoToDe(iso) {
+  const [y, m, d] = iso.split("-");
+  return `${d}.${m}.${y}`;
+}
+
+// Fill "Von" with the Ausbildungsstart date from settings, so one click sets
+// the range back to the very start of the apprenticeship.
+$("startDateStartBtn").onclick = async () => {
+  try {
+    const res = await authFetch("/api/me/settings");
+    const s = await res.json();
+    if (!s.start_date) {
+      setStatus($("scrapeStatus"), "Kein Ausbildungsstart in den Einstellungen gesetzt", "err");
+      return;
+    }
+    $("startDate").value = isoToDe(s.start_date);
+  } catch (e) {
+    setStatus($("scrapeStatus"), "Fehler: " + e.message, "err");
+  }
+};
+
 $("endDateTodayBtn").onclick = () => {
   const today = new Date();
   const dd = String(today.getDate()).padStart(2, "0");

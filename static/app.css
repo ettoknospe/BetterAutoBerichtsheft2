@@ -467,6 +467,24 @@ button.loading .spinner { display: inline-block; }
 #view-import input[type="text"]:focus {
   outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
+#view-import .input-with-btn { position: relative; }
+#view-import .input-with-btn input[type="text"] { padding-right: 7rem; }
+#view-import .inline-btn {
+  position: absolute;
+  top: 50%;
+  right: 0.4rem;
+  transform: translateY(-50%);
+  margin: 0;
+  padding: 0.35rem 0.7rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+}
+#view-import .inline-btn:hover { border-color: var(--accent); background: var(--bg); }
 #view-import button {
   padding: 0.75rem 1.25rem;
   background: var(--accent);
