@@ -76,7 +76,10 @@ $("bulkScrapeBtn").onclick = async () => {
   const startWeek = dateToWeek(startDate);
   const endWeek = dateToWeek(endDate);
 
+  const cancelBtn = $("bulkScrapeCancelBtn");
   btn.disabled = true;
+  cancelBtn.hidden = false;
+  cancelBtn.disabled = false;
   setStatus(status, "Rufe Wochen ab...", "loading");
 
   const poll = setInterval(async () => {
@@ -100,13 +103,27 @@ $("bulkScrapeBtn").onclick = async () => {
     const data = await res.json();
     if (!res.ok) throw new Error(data.detail || "Anfrage fehlgeschlagen");
 
-    setStatus(status, `Fertig: ${data.weeks_scraped} Wochen abgerufen`, "ok");
+    if (data.cancelled) {
+      setStatus(status, `Abgebrochen: ${data.weeks_scraped} Wochen abgerufen`, "ok");
+    } else {
+      setStatus(status, `Fertig: ${data.weeks_scraped} Wochen abgerufen`, "ok");
+    }
   } catch (e) {
     setStatus(status, `Fehler: ${e.message}`, "err");
   } finally {
     clearInterval(poll);
     btn.disabled = false;
+    cancelBtn.hidden = true;
   }
+};
+
+$("bulkScrapeCancelBtn").onclick = async () => {
+  const cb = $("bulkScrapeCancelBtn");
+  cb.disabled = true;
+  setStatus($("scrapeStatus"), "Wird abgebrochen…", "loading");
+  try {
+    await authFetch("/api/bulkops/scrape-cancel", { method: "POST" });
+  } catch (e) { /* the running request will still finish and report */ }
 };
 
 $("backfillBtn").onclick = async () => {

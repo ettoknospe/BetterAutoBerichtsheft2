@@ -1,6 +1,6 @@
 // Week viewer: lesson cards + IHK submit form. Ported from the old
 // single-page index.html; auth/cache/logout now live in app.js.
-import { $, authFetch, ready } from "./app.js";
+import { $, authFetch, ready, esc } from "./app.js";
 
 let weeks = [];
 let selected = null;
@@ -189,7 +189,7 @@ function renderWeek(data, wid) {
     $("scrapeBtn").hidden = false;
   }
 
-  el.innerHTML = noSchedule ? "" : days.map((d) => `<div class="day"><h2>${fmtDayHeading(d.date)}</h2>${d.lessons.map((l) => `<div class="lesson"><div class="head"><span class="subj">${l.subjectLong || l.subject}</span><span class="meta">${l.start}–${l.end}${l.teacher ? " · " + l.teacher : ""}</span></div>` + (l.content ? `<div class="content">${l.content}</div>` : `<div class="empty">(kein Inhalt)</div>`) + `</div>`).join("")}</div>`).join("");
+  el.innerHTML = noSchedule ? "" : days.map((d) => `<div class="day"><h2>${fmtDayHeading(d.date)}</h2>${d.lessons.map((l) => `<div class="lesson"><div class="head"><span class="subj">${esc(l.subjectLong || l.subject)}</span><span class="meta">${esc(l.start)}–${esc(l.end)}${l.teacher ? " · " + esc(l.teacher) : ""}</span></div>` + (l.content ? `<div class="content">${esc(l.content)}</div>` : `<div class="empty">(kein Inhalt)</div>`) + `</div>`).join("")}</div>`).join("");
 
   if (text) {
     const showForm = ihkState !== "hidden";

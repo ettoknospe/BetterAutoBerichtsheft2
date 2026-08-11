@@ -1,7 +1,7 @@
 // Settings: one flat grouped page (Konto / WebUntis / Berichtsheft /
 // IHK / Admin). No tabs. Handlers wired via addEventListener because
 // module scope is not global (inline on* attributes can't reach these).
-import { $, authFetch, ready } from "./app.js";
+import { $, authFetch, ready, esc } from "./app.js";
 
 let currentSettings = null;
 
@@ -38,7 +38,7 @@ async function loadUsers() {
     $("usersTableBody").innerHTML = users.map((u) => `
       <tr>
         <td>${u.id}</td>
-        <td>${u.username}</td>
+        <td>${esc(u.username)}</td>
         <td>${u.is_admin ? "Admin" : "Benutzer"}</td>
         <td>${new Date(u.created_at).toLocaleDateString()}</td>
       </tr>`).join("");

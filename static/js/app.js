@@ -5,6 +5,12 @@
 
 export const $ = (id) => document.getElementById(id);
 
+// HTML-escape untrusted text before it goes into innerHTML. WebUntis lesson
+// content and admin usernames are attacker-influenceable, so escape them.
+export const esc = (s) =>
+  String(s ?? "").replace(/[&<>"']/g, (c) =>
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
 const ROUTES = ["week", "import", "settings", "help"];
 const NAV_LABELS = { week: "Wochen", import: "Datenimport", settings: "Einstellungen", help: "Hilfe" };
 
