@@ -189,6 +189,28 @@
         .error.show {
             display: block;
         }
+
+        .footer {
+            text-align: center;
+            margin-top: 1.5rem;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .footer a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .footer a:hover {
+            color: var(--accent);
+        }
+
+        .footer .sep {
+            margin: 0 0.5rem;
+            opacity: 0.5;
+        }
     </style>
 </head>
 <body>
@@ -215,6 +237,12 @@
                 </button>
                 <div class="error" id="errorMsg"></div>
             </form>
+        </div>
+
+        <div class="footer">
+            <span>v1.0</span>
+            <span class="sep">·</span>
+            <a href="/impressum.html">Impressum &amp; Datenschutz</a>
         </div>
     </div>
 
