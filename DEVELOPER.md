@@ -273,6 +273,8 @@ Set these in `.env` or as environment variables.
 | `ADMIN_PASSWORD` | (empty) | If set, gates automatic admin-account creation at startup |
 | `DATA_DIR` | `/data` | Where `app.db` (and, if enabled, debug dumps) live |
 | `DEBUG_DUMPS` | off | Dev-only: dump raw WebUntis API responses to disk, unencrypted |
+| `SESSION_COOKIE_SECURE` | off | Set the `Secure` flag on the session cookie. Leave off when reached directly over plain HTTP on the LAN; turn on when only reached via the TLS reverse proxy |
+| `ENABLE_DOCS` | off | Expose `/docs`, `/redoc`, `/openapi.json`. Off by default so the schema isn't served to unauthenticated visitors |
 
 **Legacy/test-only — module-level defaults, only used as a fallback when a
 function is called with `settings=None` (which no route in `main.py` ever
@@ -298,7 +300,8 @@ additionally require `is_admin`. Errors from WebUntis surface as
 ### Auth
 
 **`POST /api/auth/login`** — `{username, password}` → `{ok, username,
-is_admin}`, sets the session cookie. 401 on bad credentials.
+is_admin}`, sets the session cookie. 401 on bad credentials; 429 after repeated failures
+(rate-limited per ip+username).
 
 **`POST /api/auth/logout`** — clears the session cookie and deletes the
 session row server-side (`db.delete_session()`), so the session id can't be
@@ -309,7 +312,7 @@ replayed after logout.
 ### Admin
 
 **`POST /api/admin/users`** (admin) — `{username, password, is_admin?}` →
-`{ok, id, username}`. 409 if the username is taken.
+`{ok, id, username}`. 409 if the username is taken; 400 if the password is under 8 chars.
 
 **`GET /api/admin/users`** (admin) → list of `{id, username, is_admin,
 created_at}`.
@@ -326,12 +329,14 @@ returned in plaintext, only as `untis_pass_set`/`ihk_pass_set` booleans.
 Only non-null fields are updated → `{ok:true}`.
 
 **`PUT /api/me/password`** — `{current_password, new_password}` → `{ok:true}`;
-401 if `current_password` is wrong.
+401 if `current_password` is wrong, 400 if `new_password` is under 8 chars. On success it
+invalidates **all** of the user's sessions (including the current one), so the SPA bounces
+to login.
 
 **`POST /api/test/untis`** / **`POST /api/test/ihk`** — same body shape as
 `PUT /api/me/settings`; tests a connection using the provided values merged
 over the user's saved settings, without persisting anything → `{ok,
-message}` or 400/502/500.
+message}` or 400/502/500 (400 also when the host isn't a public address — SSRF guard).
 
 ### Weeks & scraping
 
@@ -379,6 +384,8 @@ guess at the portal's own status label.
 `backfill_ihk_history.py` below) — `{}` if never run. Not kept in sync
 automatically.
 
+**`GET /api/ihk-entry/{week_id}`** → `{ausbinhalt1, ausbinhalt2}` for that week's existing IHK entry, or `null` if the week has no entry. Live, READ-ONLY fetch from the portal (`ihk_submitter.fetch_week_fields`) — the only path that reads IHK content back, used to pre-fill the editable boxes on a manual 'Jetzt Abrufen' so the user updates rather than blind-overwrites existing content. 400 on a malformed week id. Best-effort: any other failure (IHK unconfigured, login/network error) returns `null`, never an error, so it can't break the scrape it's piggybacked on.
+
 **`POST /api/submit-ihk`** — `{week, text, ausbinhalt1?, ausbinhalt2?,
 ihk_abschnitt_override?, ihk_ausb_mail_override?}` → `{ok:true}`. 400 on a
 malformed week id or empty text. Per-user lock (`"submit"` kind); 409 if a
@@ -390,13 +397,18 @@ also best-effort saves the two fields locally and re-syncs IHK status
 ### Bulk operations
 
 **`POST /api/bulkops/scrape-weeks`** — `{startWeek, endWeek}` (inclusive
-range) → `{weeks_scraped}`. Scrapes each week in the range sequentially,
-using the same per-user `"scrape"` lock per iteration; a failure on one week
-is logged and skipped, doesn't abort the rest.
+range) → `{weeks_scraped, total, cancelled}`. The end is clamped to the current week and
+the span is capped at `MAX_BULK_WEEKS` (520 → 400 `range too large`). Scrapes each week
+sequentially using the per-user `"scrape"` lock; a failure on one week is logged and
+skipped. Checks a per-user cancel flag between weeks and stops early if set (`cancelled`).
 
 **`GET /api/bulkops/scrape-progress`** → `{current, total, week}` (all zero/
 null if nothing is running) — polled by the UI while a bulk scrape is in
 flight.
+
+**`POST /api/bulkops/scrape-cancel`** — empty body → `{ok:true}`. Sets a per-user cancel
+flag; a running bulk scrape stops at the next week boundary (the current week finishes).
+No-op if nothing is running. Backs the "Abbrechen" button on the Datenimport view.
 
 **`POST /api/bulkops/backfill-ihk`** — empty body → `{entries_scraped}`.
 Fetches every existing IHK entry (status + full `ausbinhalt1`/`ausbinhalt2`
@@ -444,7 +456,7 @@ docker run --rm \
   -v "$PWD/tests":/srv/tests \
   -v "$PWD/pytest.ini":/srv/pytest.ini \
   --entrypoint bash \
-  bab2-berichtsheft \
+  betterautoberichtsheft2-berichtsheft \
   -c "pip install -q pytest==8.3.4 httpx==0.28.1 && cd /srv && pytest -q"
 ```
 
@@ -469,8 +481,9 @@ Tests are in the `tests/` directory:
 | `test_scraper.py` | Scraper functions and error handling (39 tests) |
 | `test_api.py` | REST API endpoints, including IHK routes (38 tests) |
 | `test_ihk_submitter.py` | IHK client and submit logic (18 tests) |
+| `test_security.py` | 2026-08 hardening: SSRF guard, password policy, rate-limit, session invalidation, bulk cap + abort, headers, docs gating |
 
-95 tests total.
+123 tests total.
 
 ### How Tests Authenticate
 
@@ -721,8 +734,10 @@ The app is designed to be lightweight:
 - Sessions: opaque random tokens (`secrets.token_urlsafe(32)`), stored
   server-side in the `sessions` table, set as an httponly, samesite=lax
   cookie, 30-day expiry.
-- Passwords: PBKDF2-HMAC-SHA256, 260,000 iterations, random 32-byte salt per
-  password.
+- Passwords: PBKDF2-HMAC-SHA256, 600,000 iterations (OWASP), random 32-byte
+  salt per password. The stored hash is self-describing (`pbkdf2_sha256$iters$salt$hash`),
+  so older 260k hashes still verify and are transparently re-hashed to 600k on the next
+  successful login.
 - Per-user data (scraped weeks, IHK history/status/fields, WebUntis/IHK
   passwords) is encrypted at rest — see "Encryption Model" above.
 - `auth.verify_password` uses `hmac.compare_digest` for the hash comparison
@@ -732,6 +747,19 @@ The app is designed to be lightweight:
   Never commit it; it's already gitignored.
 - `DEBUG_DUMPS=true` writes plaintext, unencrypted API responses to disk —
   never enable it in production.
+- Login is rate-limited (429 after 8 failures in 5 min per ip+username, in-memory) and a
+  dummy PBKDF2 verify runs for unknown usernames so response time can't enumerate users.
+- A password change invalidates **all** of that user's sessions (`db.delete_sessions_for_user`).
+- New/changed passwords must be at least 8 characters (`auth.validate_password_strength`).
+- `app/netcheck.py` validates that the user-supplied `untis_host`/`ihk_host` resolve to a
+  **public** address before either client connects (SSRF guard; blocks localhost/LAN/
+  link-local/metadata); the Untis client also disables redirects. 400 `host not allowed`.
+- A middleware adds `Content-Security-Policy`, `X-Frame-Options: DENY`,
+  `X-Content-Type-Options: nosniff`, and `Referrer-Policy: no-referrer` to every response.
+- Unexpected 500s return a generic message (full detail is logged), so internal host/port
+  and stack text don't leak to the client.
+- Bulk scrape is capped at `MAX_BULK_WEEKS` (520) and clamps the end to the current week,
+  so one request can't spin the week loop indefinitely.
 
 ## Multi-User Operations
 

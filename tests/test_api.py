@@ -359,3 +359,34 @@ def test_logout_invalidates_session_server_side(new_user):
     replay_client.cookies.set("session", session_id)
     r = replay_client.get("/api/auth/whoami")
     assert r.status_code == 401
+
+
+def test_ihk_entry_bad_week_format(new_user):
+    r = new_user.client.get("/api/ihk-entry/bad")
+    assert r.status_code == 400
+
+
+def test_ihk_entry_returns_fields(new_user, monkeypatch):
+    monkeypatch.setattr(
+        ihk_submitter, "fetch_week_fields", lambda week_id, settings=None: {"ausbinhalt1": "a", "ausbinhalt2": "b"}
+    )
+    r = new_user.client.get("/api/ihk-entry/2026-W29")
+    assert r.status_code == 200
+    assert r.json() == {"ausbinhalt1": "a", "ausbinhalt2": "b"}
+
+
+def test_ihk_entry_null_when_no_entry(new_user, monkeypatch):
+    monkeypatch.setattr(ihk_submitter, "fetch_week_fields", lambda week_id, settings=None: None)
+    r = new_user.client.get("/api/ihk-entry/2026-W29")
+    assert r.status_code == 200
+    assert r.json() is None
+
+
+def test_ihk_entry_swallows_errors_and_returns_null(new_user, monkeypatch):
+    def boom(week_id, settings=None):
+        raise RuntimeError("portal down")
+
+    monkeypatch.setattr(ihk_submitter, "fetch_week_fields", boom)
+    r = new_user.client.get("/api/ihk-entry/2026-W29")
+    assert r.status_code == 200
+    assert r.json() is None
