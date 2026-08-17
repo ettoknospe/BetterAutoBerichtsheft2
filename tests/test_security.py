@@ -125,3 +125,26 @@ def test_bulk_scrape_can_be_cancelled(new_user, monkeypatch):
 
 def test_scrape_cancel_requires_auth(unauth_client):
     assert unauth_client.post("/api/bulkops/scrape-cancel").status_code == 401
+
+
+def test_bulk_scrape_surfaces_lock_conflict_instead_of_swallowing_it(new_user, monkeypatch):
+    """If the per-user scrape lock is already held (e.g. by the scheduler or
+    a concurrent /api/scrape), bulk scrape must abort with 409, not silently
+    skip every remaining week and report success."""
+    calls = []
+
+    def fake_scrape(wk, **k):
+        calls.append(wk)
+
+    monkeypatch.setattr(main.scraper, "scrape_week", fake_scrape)
+
+    lock = main._get_lock(new_user.user_id, "scrape")
+    assert lock.acquire(blocking=False)
+    try:
+        r = new_user.client.post("/api/bulkops/scrape-weeks",
+                                 json={"startWeek": "2025-W01", "endWeek": "2025-W10"})
+    finally:
+        lock.release()
+
+    assert r.status_code == 409
+    assert calls == []
