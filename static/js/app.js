@@ -114,6 +114,14 @@ export const ready = (async () => {
   );
   const tog = $("sidebarToggle");
   if (tog) tog.addEventListener("click", toggleSidebar);
+  // Hide the sidebar logo if the (user-local, gitignored) logo.svg is absent.
+  // Was an inline onerror= attribute, which the CSP blocks - wire it here.
+  const logo = document.querySelector(".sidebar-logo-img");
+  if (logo) {
+    const hideLogo = () => { logo.style.display = "none"; };
+    logo.addEventListener("error", hideLogo);
+    if (logo.complete && logo.naturalWidth === 0) hideLogo();
+  }
 
   const user = await whoami();
   await ensureCacheOwnership(user.username);
