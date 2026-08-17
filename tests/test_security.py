@@ -4,7 +4,8 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app import main
-from app.netcheck import validate_external_host, HostNotAllowed
+from app.ihk_client import IhkClient
+from app.netcheck import validate_external_host, validate_redirect_target, HostNotAllowed
 
 
 # ---- SSRF host guard (finding #2) ----
@@ -16,6 +17,47 @@ from app.netcheck import validate_external_host, HostNotAllowed
 def test_netcheck_rejects_non_public(host):
     with pytest.raises(HostNotAllowed):
         validate_external_host(host)
+
+
+class _FakeRedirectResponse:
+    def __init__(self, url, location, status_code=302):
+        self.url = url
+        self.status_code = status_code
+        self.headers = {"Location": location}
+
+    @property
+    def is_redirect(self):
+        return "location" in {k.lower() for k in self.headers} and self.status_code in (301, 302, 303, 307, 308)
+
+
+@pytest.mark.parametrize("location", [
+    "https://127.0.0.1/admin",
+    "https://169.254.169.254/latest/meta-data/",
+    "http://10.0.0.5/",
+    "/relative-path-on-192.168.1.1",  # relative Location, resolved against response.url below
+])
+def test_validate_redirect_target_blocks_private_hop(location):
+    if location.startswith("/"):
+        resp = _FakeRedirectResponse("https://192.168.1.1/start", location)
+    else:
+        resp = _FakeRedirectResponse("https://example.com/start", location)
+    with pytest.raises(HostNotAllowed):
+        validate_redirect_target(resp)
+
+
+def test_validate_redirect_target_allows_public_hop():
+    resp = _FakeRedirectResponse("https://example.com/start", "https://example.org/next")
+    validate_redirect_target(resp)  # must not raise
+
+
+def test_validate_redirect_target_ignores_non_redirects():
+    resp = _FakeRedirectResponse("https://example.com/start", "https://127.0.0.1/admin", status_code=200)
+    validate_redirect_target(resp)  # 200 is not a redirect - must not raise
+
+
+def test_ihk_client_registers_redirect_revalidation_hook(user_settings):
+    client = IhkClient(user_settings)
+    assert validate_redirect_target in client.s.hooks["response"]
 
 
 def test_netcheck_allows_public_ip_literal():
@@ -125,3 +167,26 @@ def test_bulk_scrape_can_be_cancelled(new_user, monkeypatch):
 
 def test_scrape_cancel_requires_auth(unauth_client):
     assert unauth_client.post("/api/bulkops/scrape-cancel").status_code == 401
+
+
+def test_bulk_scrape_surfaces_lock_conflict_instead_of_swallowing_it(new_user, monkeypatch):
+    """If the per-user scrape lock is already held (e.g. by the scheduler or
+    a concurrent /api/scrape), bulk scrape must abort with 409, not silently
+    skip every remaining week and report success."""
+    calls = []
+
+    def fake_scrape(wk, **k):
+        calls.append(wk)
+
+    monkeypatch.setattr(main.scraper, "scrape_week", fake_scrape)
+
+    lock = main._get_lock(new_user.user_id, "scrape")
+    assert lock.acquire(blocking=False)
+    try:
+        r = new_user.client.post("/api/bulkops/scrape-weeks",
+                                 json={"startWeek": "2025-W01", "endWeek": "2025-W10"})
+    finally:
+        lock.release()
+
+    assert r.status_code == 409
+    assert calls == []

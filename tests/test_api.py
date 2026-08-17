@@ -390,3 +390,17 @@ def test_ihk_entry_swallows_errors_and_returns_null(new_user, monkeypatch):
     r = new_user.client.get("/api/ihk-entry/2026-W29")
     assert r.status_code == 200
     assert r.json() is None
+
+
+def test_iter_weeks_skips_phantom_w53_in_52_week_year():
+    # 2025 has 52 ISO weeks - no W53 exists, so crossing this boundary must
+    # not yield "2025-W53".
+    weeks = list(main._iter_weeks("2025-W51", "2026-W02"))
+    assert "2025-W53" not in weeks
+    assert weeks == ["2025-W51", "2025-W52", "2026-W01", "2026-W02"]
+
+
+def test_iter_weeks_keeps_real_w53_in_53_week_year():
+    # 2026 is a real 53-week ISO year - W53 must still be yielded.
+    weeks = list(main._iter_weeks("2026-W52", "2027-W01"))
+    assert weeks == ["2026-W52", "2026-W53", "2027-W01"]

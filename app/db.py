@@ -174,11 +174,12 @@ def run_migrations():
                                        (version, datetime.now(timezone.utc).isoformat(timespec="seconds")))
                             conn.commit()
                             log.info("Migration %d already applied", version)
-                        except:
+                        except Exception:
                             conn.rollback()
                     else:
                         conn.rollback()
                         log.exception("Migration %d failed", version)
+                        raise
                 except Exception as e:
                     conn.rollback()
                     log.exception("Migration %d failed", version)
@@ -243,7 +244,13 @@ def bootstrap_admin_if_needed():
             log.error("SECRET_ENCRYPTION_KEY not set")
             raise RuntimeError("SECRET_ENCRYPTION_KEY must be set in .env for bootstrap")
 
-        from .auth import hash_password
+        from .auth import hash_password, validate_password_strength
+
+        try:
+            validate_password_strength(config.ADMIN_PASSWORD)
+        except ValueError as e:
+            log.error("Cannot bootstrap admin: %s", e)
+            raise RuntimeError(f"Cannot bootstrap admin — ADMIN_PASSWORD is too weak: {e}")
 
         admin_username = config.ADMIN_USERNAME or "admin"
         password_hash = hash_password(config.ADMIN_PASSWORD)

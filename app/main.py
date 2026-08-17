@@ -47,12 +47,10 @@ def _iter_weeks(start: str, end: str):
     wk = start
     while wk <= end:
         yield wk
-        y, w = wk.split("-W")
-        w = int(w) + 1
-        if w > 53:
-            w = 1
-            y = int(y) + 1
-        wk = f"{y}-W{w:02d}"
+        monday, _ = scraper.week_bounds(wk)
+        next_monday = monday + dt.timedelta(days=7)
+        iso = next_monday.isocalendar()
+        wk = f"{iso.year}-W{iso.week:02d}"
 
 # Constants
 WEEK_RE = re.compile(r"^\d{4}-W\d{2}$")
@@ -106,7 +104,10 @@ def _login_is_locked(key: tuple) -> bool:
     now = time.monotonic()
     with _login_attempts_lock:
         hits = [t for t in _login_attempts.get(key, []) if now - t < _LOGIN_WINDOW_SECONDS]
-        _login_attempts[key] = hits
+        if hits:
+            _login_attempts[key] = hits
+        else:
+            _login_attempts.pop(key, None)
         return len(hits) >= _LOGIN_MAX_ATTEMPTS
 
 
@@ -605,6 +606,11 @@ def bulkops_scrape_weeks(req: BulkScrapeRequest, user: auth.AuthedUser = Depends
                     weeks_scraped += 1
                 finally:
                     lock.release()
+            except HTTPException:
+                # Lock contention (e.g. a concurrent /api/scrape or the
+                # scheduler) is operation-wide, not a per-week scrape
+                # failure - surface it instead of silently skipping weeks.
+                raise
             except Exception as e:
                 log.warning("failed to scrape %s: %s", wk, e)
         return {"weeks_scraped": weeks_scraped, "total": total, "cancelled": cancelled}

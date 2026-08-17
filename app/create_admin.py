@@ -11,7 +11,7 @@ import getpass
 import sys
 
 from . import db
-from .auth import hash_password
+from .auth import hash_password, validate_password_strength
 
 
 def main():
@@ -46,11 +46,18 @@ def main():
     # Get password
     if args.password:
         password = args.password
+        try:
+            validate_password_strength(password)
+        except ValueError as e:
+            print(f"❌ {e}", file=sys.stderr)
+            sys.exit(1)
     else:
         while True:
             password = getpass.getpass("Admin password: ")
-            if not password:
-                print("❌ Password cannot be empty.", file=sys.stderr)
+            try:
+                validate_password_strength(password)
+            except ValueError as e:
+                print(f"❌ {e}", file=sys.stderr)
                 continue
             confirm = getpass.getpass("Confirm password: ")
             if password != confirm:
