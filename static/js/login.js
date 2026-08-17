@@ -1,3 +1,10 @@
+const logo = document.querySelector(".logo img");
+if (logo) {
+    const hideLogo = () => { logo.style.display = "none"; };
+    logo.addEventListener("error", hideLogo);
+    if (logo.complete && logo.naturalWidth === 0) hideLogo();
+}
+
 const form = document.getElementById('loginForm');
 const errorDiv = document.getElementById('errorMsg');
 const loginBtn = document.getElementById('loginBtn');
