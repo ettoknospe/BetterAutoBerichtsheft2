@@ -4,6 +4,18 @@ The WebUntis/IHK hosts come from user settings, so a malicious value could
 aim the server's own HTTP client at localhost, LAN, or cloud-metadata
 (169.254.169.254). We resolve the host and reject any address that is
 loopback / link-local / private / reserved before the client connects.
+
+Known residual gap: this validates the *resolution*, not the connection.
+A host with a short-TTL DNS record could pass this check and then resolve
+to a different (private) address by the time requests/urllib3 connects -
+classic DNS-rebinding TOCTOU. Not fixed here: closing it needs pinning the
+validated IP into the HTTP client while preserving the original hostname
+for TLS SNI/cert verification and the Host header (both external hosts are
+multi-tenant), which is real surgery across ihk_client.py/untis_client.py
+that we can't verify without a live TLS test server. In practice, default
+`verify=True` TLS with SNI blocks most rebinding targets (no valid cert for
+the attacker's hostname), and the redirect-based variant of this same class
+of bug is closed by validate_redirect_target() below.
 """
 
 import ipaddress
