@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>BetterAutoBerichtsheft</title>
+<link rel="stylesheet" href="/app.css">
+</head>
+<body>
+
+<!-- Mobile top bar (hidden on desktop via CSS) -->
+<div class="topbar">
+  <button class="hamburger" id="hamburger" aria-label="Menü öffnen">☰</button>
+  <span class="topbar-title" id="topbarTitle">Wochen</span>
+</div>
+<div class="backdrop" id="backdrop"></div>
+
+<!-- Persistent sidebar -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <img src="/logo.svg" alt="" class="sidebar-logo-img">
+    <div class="sidebar-title">BetterAutoBerichtsheft</div>
+  </div>
+
+  <button class="sidebar-toggle" id="sidebarToggle" title="Seitenleiste ein-/ausklappen" aria-label="Seitenleiste ein- oder ausklappen">
+    <span class="nav-icon">«</span>
+    <span class="nav-text">Einklappen</span>
+  </button>
+
+  <nav class="sidebar-nav">
+    <a href="#/week" data-route="week">
+      <img src="/calendar.svg" alt="" class="nav-icon nav-icon-img">
+      <span class="nav-text">Wochen</span>
+    </a>
+    <a href="#/import" data-route="import">
+      <img src="/sync.svg" alt="" class="nav-icon nav-icon-img">
+      <span class="nav-text">Datenimport</span>
+    </a>
+    <a href="#/settings" data-route="settings">
+      <span class="nav-icon">⚙</span>
+      <span class="nav-text">Einstellungen</span>
+    </a>
+    <a href="#/help" data-route="help">
+      <img src="/help.svg" alt="" class="nav-icon nav-icon-img">
+      <span class="nav-text">Hilfe</span>
+    </a>
+  </nav>
+
+  <div class="sidebar-footer">
+    <button class="logout-btn" id="logoutBtn" title="Abmelden">
+      <span class="nav-icon">←</span>
+      <span class="nav-text">Abmelden</span>
+    </button>
+  </div>
+</aside>
+
+<main class="main">
+  <div class="content-wrapper">
+
+    <!-- ============ WOCHEN ============ -->
+    <section class="view active" id="view-week">
+      <div class="nav">
+        <button id="prev" title="Woche zurück">←</button>
+        <select id="weekSelect"></select>
+        <button id="next" title="Woche vor">→</button>
+      </div>
+      <div class="meta"><span id="weekMeta"></span> <span id="ihkBadge"></span></div>
+
+      <div class="actions">
+        <button class="primary" id="scrapeBtn">Jetzt Abrufen</button>
+        <button id="ihkBtn" hidden>Bei IHK einreichen</button>
+      </div>
+      <div id="status"></div>
+
+      <div id="content"><div class="placeholder">Lade…</div></div>
+    </section>
+
+    <!-- ============ DATENIMPORT ============ -->
+    <section class="view" id="view-import">
+      <h1 class="page-title">Datenimport</h1>
+
+      <div class="section">
+        <h2>WebUntis – Wochen abrufen</h2>
+        <p class="section-desc">Ruft alle Wochen im gewählten Zeitraum auf einmal von WebUntis ab.</p>
+        <div class="form-group">
+          <label for="startDate">Von (z.B. 01.08.2026):</label>
+          <div class="input-with-btn">
+            <input type="text" id="startDate" placeholder="01.08.2026">
+            <button type="button" id="startDateStartBtn" class="inline-btn" title="Ausbildungsstart aus den Einstellungen einsetzen">Ab Start</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="endDate">Bis (z.B. 09.08.2026):</label>
+          <div class="input-with-btn">
+            <input type="text" id="endDate" placeholder="09.08.2026">
+            <button type="button" id="endDateTodayBtn" class="inline-btn">Bis heute</button>
+          </div>
+        </div>
+        <button id="bulkScrapeBtn">Zeitraum abrufen</button>
+        <button id="bulkScrapeCancelBtn" hidden>Abbrechen</button>
+        <div id="scrapeStatus"></div>
+      </div>
+
+      <div class="section">
+        <h2>IHK – Historie abrufen</h2>
+        <p class="section-desc">Kopiert alle vorhandenen Einträge von der IHK-Plattform lokal in die App.</p>
+        <button id="backfillBtn">IHK-Historie abrufen</button>
+        <div id="backfillStatus"></div>
+      </div>
+    </section>
+
+    <!-- ============ EINSTELLUNGEN ============ -->
+    <section class="view" id="view-settings">
+      <h1 class="page-title">Einstellungen</h1>
+
+      <!-- Konto -->
+      <form class="settings-group" id="passwordForm">
+        <h2>Konto</h2>
+        <p class="group-desc">Dein Anmeldepasswort für diese App.</p>
+        <div id="account-msg" class="message"></div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="current_password">Aktuelles Passwort</label>
+            <input type="password" id="current_password" required>
+          </div>
+          <div class="form-group">
+            <label for="new_password">Neues Passwort</label>
+            <input type="password" id="new_password" required>
+          </div>
+        </div>
+        <button type="submit"><span class="spinner"></span>Passwort ändern</button>
+      </form>
+
+      <!-- WebUntis (Quelle) -->
+      <form class="settings-group" id="untisForm">
+        <h2>WebUntis</h2>
+        <p class="group-desc">Zugangsdaten zur Schule – die Quelle für den Berufsschul-Lehrstoff.</p>
+        <div id="untis-msg" class="message"></div>
+        <div class="form-group">
+          <label for="untis_host">Host</label>
+          <input type="text" id="untis_host" placeholder="z.B. example.webuntis.com">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="untis_user">Benutzername</label>
+            <input type="text" id="untis_user" placeholder="WebUntis-Benutzername">
+          </div>
+          <div class="form-group">
+            <label for="untis_pass">Passwort</label>
+            <input type="password" id="untis_pass" placeholder="WebUntis-Passwort">
+            <div class="password-note">Leer lassen, um das vorhandene Passwort zu behalten</div>
+          </div>
+        </div>
+        <div class="button-group">
+          <button type="submit"><span class="spinner"></span>WebUntis speichern</button>
+          <button type="button" class="secondary" id="testUntisBtn">Verbindung testen</button>
+        </div>
+      </form>
+
+      <!-- Berichtsheft (Start + Zeitplan zusammen) -->
+      <form class="settings-group" id="scraperForm">
+        <h2>Berichtsheft</h2>
+        <p class="group-desc">Ab wann das Berichtsheft beginnt und wann automatisch abgerufen wird.</p>
+        <div id="scraper-msg" class="message"></div>
+        <div class="form-group">
+          <label for="start_date">Erster Tag der Ausbildung</label>
+          <input type="date" id="start_date">
+          <small>Wochen vor diesem Datum werden nicht angezeigt und können nicht abgerufen werden.</small>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="scrape_day">Automatisch abrufen am</label>
+            <select id="scrape_day">
+              <option value="off">Aus (nur manuell)</option>
+              <option value="mon">Montag</option>
+              <option value="tue">Dienstag</option>
+              <option value="wed">Mittwoch</option>
+              <option value="thu">Donnerstag</option>
+              <option value="fri">Freitag</option>
+              <option value="sat">Samstag</option>
+              <option value="sun">Sonntag</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="scrape_time">Uhrzeit (24-Stunden)</label>
+            <input type="time" id="scrape_time" value="18:00">
+          </div>
+        </div>
+        <button type="submit"><span class="spinner"></span>Berichtsheft speichern</button>
+      </form>
+
+      <!-- IHK (Ziel) -->
+      <form class="settings-group" id="ihkForm">
+        <h2>IHK</h2>
+        <p class="group-desc">Zugangsdaten zum IHK-Portal – das Ziel, an das eingereicht wird.</p>
+        <div id="ihk-msg" class="message"></div>
+        <div class="form-group">
+          <label for="ihk_host">Host</label>
+          <input type="text" id="ihk_host" placeholder="z.B. www.bildung-ihk-nordwestfalen.de (kein https://)">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="ihk_user">Benutzername</label>
+            <input type="text" id="ihk_user" placeholder="IHK-Benutzername">
+          </div>
+          <div class="form-group">
+            <label for="ihk_pass">Passwort</label>
+            <input type="password" id="ihk_pass" placeholder="IHK-Passwort">
+            <div class="password-note">Leer lassen, um das vorhandene Passwort zu behalten</div>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="ihk_ausbabschnitt">Ausbildungsabschnitt</label>
+            <input type="text" id="ihk_ausbabschnitt" placeholder="z.B. 1">
+          </div>
+          <div class="form-group">
+            <label for="ihk_ausb_mail">Ausbilder E-Mail</label>
+            <input type="email" id="ihk_ausb_mail" placeholder="ausbilder@example.com">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="checkbox-label">
+            <input type="checkbox" id="ihk_use_settings" checked>
+            Diese Werte immer verwenden (nicht pro Woche abfragen)
+          </label>
+          <small>Deaktivieren, um Ausbildungsabschnitt und Ausbilder-E-Mail für jede Wocheneinreichung einzeln anzugeben.</small>
+        </div>
+        <div class="button-group">
+          <button type="submit"><span class="spinner"></span>IHK speichern</button>
+          <button type="button" class="secondary" id="testIhkBtn">Verbindung testen</button>
+        </div>
+      </form>
+
+      <!-- Admin (nur Admins) -->
+      <div class="settings-group admin-only">
+        <h2>Administration</h2>
+        <p class="group-desc">Benutzerverwaltung.</p>
+        <div id="admin-msg" class="message"></div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="new_user_name">Benutzername</label>
+            <input type="text" id="new_user_name">
+          </div>
+          <div class="form-group">
+            <label for="new_user_pass">Passwort</label>
+            <input type="password" id="new_user_pass">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="checkbox-label">
+            <input type="checkbox" id="new_user_admin">
+            Als Admin festlegen
+          </label>
+        </div>
+        <button type="button" id="createUserBtn"><span class="spinner"></span>Benutzer erstellen</button>
+
+        <table class="users-table" id="usersTable">
+          <thead>
+            <tr><th>ID</th><th>Benutzername</th><th>Rolle</th><th>Erstellt</th></tr>
+          </thead>
+          <tbody id="usersTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ============ HILFE ============ -->
+    <section class="view" id="view-help">
+      <h1 class="page-title">Hilfe</h1>
+
+      <div class="help-section">
+        <h2><span class="help-icon">ℹ️</span>Was diese App macht</h2>
+        <p>Diese App nimmt dir das Ausfüllen des Berichtshefts ab. Sie liest den in <strong>WebUntis</strong> eingetragenen Lehrstoff deiner Berufsschule aus, formatiert ihn zu fertigem Berichtsheft-Text und trägt ihn auf Wunsch in das <strong>IHK-Portal</strong> ein.</p>
+        <h3>Was mit deinen Daten passiert</h3>
+        <ul>
+          <li>Die App läuft komplett auf <strong>diesem einen Server</strong> – keine fremden Dienste, keine Cloud dahinter.</li>
+          <li>Deine WebUntis- und IHK-Zugangsdaten werden <strong>verschlüsselt</strong> in einer lokalen Datenbank gespeichert und nur benutzt, um sich in deinem Namen bei WebUntis bzw. der IHK anzumelden.</li>
+          <li>Beim <strong>Abrufen</strong> liest die App deinen bestehenden IHK-Eintrag einmal aus, nur um ihn dir <strong>anzuzeigen</strong> – so siehst du, was schon dort steht, bevor du etwas änderst.</li>
+          <li>Auf dem Portal wird aber <strong>nie etwas von selbst verändert</strong>: ein Eintrag wird nur gespeichert, wenn du „Bei IHK einreichen" drückst, und es wird <strong>nie automatisch „Speichern &amp; Senden"</strong> ausgelöst – das Absenden zur Genehmigung machst du selbst.</li>
+          <li>Jeder Benutzer sieht nur seine eigenen Daten.</li>
+        </ul>
+        <p>Kurz gesagt: Die App tippt für dich ab, was du sonst von Hand aus WebUntis in die IHK überträgst – nicht mehr und nicht weniger.</p>
+      </div>
+
+      <div class="help-section">
+        <h2><span class="help-icon">🔑</span>Einrichtung: die zwei Konten</h2>
+        <p>Damit es funktioniert, hinterlegst du einmalig deine <strong>zwei bestehenden Konten</strong> unter <strong>⚙ Einstellungen</strong>. Das sind dieselben Zugangsdaten, mit denen du dich sonst direkt bei WebUntis und der IHK anmeldest – du legst hier <em>keine</em> neuen Konten an.</p>
+
+        <h3>1. WebUntis (deine Schule)</h3>
+        <ol>
+          <li>Öffne <strong>⚙ Einstellungen → WebUntis</strong>.</li>
+          <li><strong>Host</strong>: die Adresse deiner WebUntis-Schule, z.&nbsp;B. <code>example.webuntis.com</code> (ohne <code>https://</code>). Steht in der Adresszeile, wenn du WebUntis im Browser öffnest.</li>
+          <li><strong>Benutzername</strong> und <strong>Passwort</strong>: deine gewohnten WebUntis-Anmeldedaten.</li>
+          <li>Mit <strong>Verbindung testen</strong> prüfen, dann <strong>WebUntis speichern</strong>.</li>
+        </ol>
+
+        <h3>2. IHK-Portal</h3>
+        <ol>
+          <li>Öffne <strong>⚙ Einstellungen → IHK</strong>.</li>
+          <li><strong>Host</strong>: die Adresse des IHK-Portals, z.&nbsp;B. <code>www.bildung-ihk-nordwestfalen.de</code> (ohne <code>https://</code>).</li>
+          <li><strong>Benutzername</strong> und <strong>Passwort</strong>: deine Anmeldedaten fürs IHK-Portal.</li>
+          <li><strong>Ausbildungsabschnitt</strong> und <strong>Ausbilder-E-Mail</strong> eintragen (findest du in deinem IHK-Berichtsheft).</li>
+          <li>Mit <strong>Verbindung testen</strong> prüfen, dann <strong>IHK speichern</strong>.</li>
+        </ol>
+
+        <h3>3. Ersten Tag festlegen</h3>
+        <p>Trage unter <strong>⚙ Einstellungen → Berichtsheft</strong> den <strong>ersten Tag deiner Ausbildung</strong> ein – Wochen davor werden ausgeblendet. Optional stellst du dort einen automatischen Abrufplan ein.</p>
+        <p>Fertig. Ab jetzt kannst du unter <strong>📅 Wochen</strong> abrufen und einreichen.</p>
+      </div>
+
+      <div class="help-section">
+        <h2><span class="help-icon">📅</span>So benutzt du es</h2>
+        <ol>
+          <li>Unter <strong>📅 Wochen</strong> die gewünschte Woche wählen.</li>
+          <li><strong>Jetzt Abrufen</strong> holt den Lehrstoff aus WebUntis und zeigt ihn als fertigen „Berufsschule"-Text.</li>
+          <li>Die Felder <strong>Betriebliche Tätigkeiten</strong> und <strong>Unterweisungen</strong> selbst ausfüllen (was im Betrieb war).</li>
+          <li><strong>Bei IHK einreichen</strong> speichert den Eintrag im IHK-Portal. Das endgültige Absenden zur Genehmigung machst du weiterhin selbst dort.</li>
+        </ol>
+        <p>Beim ersten Einrichten hilft <strong>Datenimport</strong>, viele vergangene Wochen auf einmal abzurufen.</p>
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<script type="module" src="/js/app.js"></script>
+<script type="module" src="/js/week.js"></script>
+<script type="module" src="/js/settings.js"></script>
+<script type="module" src="/js/bulkops.js"></script>
+
+</body>
+</html>

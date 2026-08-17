@@ -1,0 +1,13 @@
+.env
+data/
+data.bak/
+.venv/
+__pycache__/
+.DS_Store
+.pytest_cache/
+graphify-out/
+.claude/
+old-project/
+logo.png
+logo.svg
+sync-svgrepo-com.svg
