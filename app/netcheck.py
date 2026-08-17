@@ -8,6 +8,7 @@ loopback / link-local / private / reserved before the client connects.
 
 import ipaddress
 import socket
+from urllib.parse import urljoin, urlparse
 
 
 class HostNotAllowed(Exception):
@@ -55,3 +56,21 @@ def validate_external_host(host: str) -> None:
     for ip in resolved:
         if not _addr_is_public(ip):
             raise HostNotAllowed(f"host {host!r} resolves to non-public address {ip}")
+
+
+def validate_redirect_target(response, **kwargs):
+    """requests 'response' hook: re-validate each redirect hop's host.
+
+    validate_external_host() only checks the host a client was constructed
+    with. A validated public host can later respond with a redirect to a
+    private/internal target, so any client that follows redirects must
+    re-check every hop's Location before it's followed, not just the first.
+    """
+    if not response.is_redirect:
+        return
+    location = response.headers.get("Location")
+    if not location:
+        return
+    host = urlparse(urljoin(response.url, location)).hostname
+    if host:
+        validate_external_host(host)

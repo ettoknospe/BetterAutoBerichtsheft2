@@ -4,7 +4,8 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app import main
-from app.netcheck import validate_external_host, HostNotAllowed
+from app.ihk_client import IhkClient
+from app.netcheck import validate_external_host, validate_redirect_target, HostNotAllowed
 
 
 # ---- SSRF host guard (finding #2) ----
@@ -16,6 +17,47 @@ from app.netcheck import validate_external_host, HostNotAllowed
 def test_netcheck_rejects_non_public(host):
     with pytest.raises(HostNotAllowed):
         validate_external_host(host)
+
+
+class _FakeRedirectResponse:
+    def __init__(self, url, location, status_code=302):
+        self.url = url
+        self.status_code = status_code
+        self.headers = {"Location": location}
+
+    @property
+    def is_redirect(self):
+        return "location" in {k.lower() for k in self.headers} and self.status_code in (301, 302, 303, 307, 308)
+
+
+@pytest.mark.parametrize("location", [
+    "https://127.0.0.1/admin",
+    "https://169.254.169.254/latest/meta-data/",
+    "http://10.0.0.5/",
+    "/relative-path-on-192.168.1.1",  # relative Location, resolved against response.url below
+])
+def test_validate_redirect_target_blocks_private_hop(location):
+    if location.startswith("/"):
+        resp = _FakeRedirectResponse("https://192.168.1.1/start", location)
+    else:
+        resp = _FakeRedirectResponse("https://example.com/start", location)
+    with pytest.raises(HostNotAllowed):
+        validate_redirect_target(resp)
+
+
+def test_validate_redirect_target_allows_public_hop():
+    resp = _FakeRedirectResponse("https://example.com/start", "https://example.org/next")
+    validate_redirect_target(resp)  # must not raise
+
+
+def test_validate_redirect_target_ignores_non_redirects():
+    resp = _FakeRedirectResponse("https://example.com/start", "https://127.0.0.1/admin", status_code=200)
+    validate_redirect_target(resp)  # 200 is not a redirect - must not raise
+
+
+def test_ihk_client_registers_redirect_revalidation_hook(user_settings):
+    client = IhkClient(user_settings)
+    assert validate_redirect_target in client.s.hooks["response"]
 
 
 def test_netcheck_allows_public_ip_literal():
