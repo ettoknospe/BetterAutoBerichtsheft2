@@ -10,7 +10,7 @@ Mehrbenutzerfähig: jede Person meldet sich mit eigenem Account an, mit
 eigenen WebUntis- und IHK-Zugangsdaten (verschlüsselt gespeichert). Läuft als
 ein Docker-Container, auf amd64 wie auf dem Raspberry Pi (arm64).
 
-## Funktionen
+## Funktionen 
 
 - **Automatischer Wochenabruf**: jede Woche wird der Lehrstoff aus WebUntis
   gescraped und zu einem fertigen Berufsschule-Text zusammengefasst — Doppel-
