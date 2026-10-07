@@ -359,3 +359,31 @@ def test_save_entry_raises_if_draft_save_creates_no_new_entry(user_settings):
             client.save_entry(dict(_DRAFT), "new content")
     finally:
         ihk_client_module.IhkClient.list_entries = original
+
+
+def test_fetch_week_fields_returns_existing_content(monkeypatch, fake_ihk):
+    monkeypatch.setattr(
+        IhkClient, "list_entries", lambda self: {"2026-W29": {"lfdnr": 42, "status": "in Bearbeitung bei Azubi"}}
+    )
+    monkeypatch.setattr(
+        IhkClient,
+        "fetch_entry",
+        lambda self, lfdnr: {"ausbinhalt1": "Betrieb", "ausbinhalt2": "Unterweisung", "ausbinhalt3": "school"},
+    )
+    result = ihk_submitter.fetch_week_fields("2026-W29", settings=fake_ihk)
+    assert result == {"ausbinhalt1": "Betrieb", "ausbinhalt2": "Unterweisung"}
+
+
+def test_fetch_week_fields_none_when_week_absent(monkeypatch, fake_ihk):
+    monkeypatch.setattr(IhkClient, "list_entries", lambda self: {"2026-W28": {"lfdnr": 41, "status": "Nachweis genehmigt"}})
+    monkeypatch.setattr(IhkClient, "fetch_entry", lambda self, lfdnr: pytest.fail("should not fetch a missing week"))
+    assert ihk_submitter.fetch_week_fields("2026-W29", settings=fake_ihk) is None
+
+
+def test_fetch_week_fields_none_for_unpersisted_draft(monkeypatch, fake_ihk):
+    # lfdnr '0' = an unsaved "Neuer Eintrag" draft; no content to read back yet
+    monkeypatch.setattr(
+        IhkClient, "list_entries", lambda self: {"2026-W29": {"lfdnr": "0", "status": "in Bearbeitung bei Azubi"}}
+    )
+    monkeypatch.setattr(IhkClient, "fetch_entry", lambda self, lfdnr: pytest.fail("should not fetch a draft lfdnr"))
+    assert ihk_submitter.fetch_week_fields("2026-W29", settings=fake_ihk) is None

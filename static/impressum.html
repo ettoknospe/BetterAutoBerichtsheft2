@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BetterAutoBerichtsheft - Impressum &amp; Datenschutz</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0f1419;
+            --bg-secondary: #1a1f28;
+            --text-primary: #f5f7fa;
+            --text-secondary: #a0a9b8;
+            --accent: #3b82f6;
+            --accent-dark: #2563eb;
+            --border: #2d3544;
+        }
+
+        @media (prefers-color-scheme: light) {
+            :root {
+                --bg-primary: #fafbfc;
+                --bg-secondary: #ffffff;
+                --text-primary: #0f1419;
+                --text-secondary: #57606a;
+                --border: #d5dce0;
+            }
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 3rem 1rem;
+        }
+
+        .wrapper {
+            width: 100%;
+            max-width: 640px;
+        }
+
+        .back {
+            display: inline-block;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .back:hover {
+            color: var(--accent);
+        }
+
+        h1 {
+            font-size: 1.75rem;
+            font-weight: 600;
+            margin-bottom: 2rem;
+            letter-spacing: -0.5px;
+        }
+
+        .card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 2rem;
+        }
+
+        section + section {
+            margin-top: 2rem;
+        }
+
+        h2 {
+            font-size: 1.05rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+        }
+
+        p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.7;
+        }
+
+        .placeholder {
+            color: var(--text-secondary);
+            opacity: 0.7;
+            font-style: italic;
+        }
+
+        a.mail {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        a.mail:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        <a class="back" href="/login.html">← Zurück zur Anmeldung</a>
+        <h1>Impressum &amp; Datenschutz</h1>
+
+        <div class="card">
+            <section>
+                <h2>Verantwortliche Person</h2>
+                <p>
+                    <span class="placeholder">[Dein Name]</span><br>
+                    E-Mail: <a class="mail" href="mailto:timbo@muenster.de">timbo@muenster.de</a>
+                </p>
+                <p style="margin-top: 0.75rem; font-size: 0.85rem;">
+                    Dies ist ein rein privates, passwortgeschütztes Angebot ohne
+                    geschäftlichen Zweck. Ein Impressum nach § 5 DDG ist daher nicht
+                    erforderlich; die Kontaktangabe dient allein der Transparenz.
+                    Eine Postanschrift wird bewusst nicht veröffentlicht.
+                </p>
+            </section>
+
+            <section>
+                <h2>Datenschutzhinweis</h2>
+                <p>
+                    <strong>Welche Daten:</strong> Benutzername, Passwort (nur als
+                    gesalzener PBKDF2-HMAC-SHA256-Hash, nie im Klartext), ein
+                    Sitzungs-Cookie, deine hinterlegten WebUntis- und IHK-Zugangsdaten
+                    sowie die für dich abgerufenen Stundenplan- und Berichtsheft-Inhalte.
+                </p>
+                <p>
+                    <strong>Verschlüsselung:</strong> Zugangsdaten und personenbezogene
+                    Inhalte werden pro Nutzer mit einem eigenen Schlüssel verschlüsselt
+                    gespeichert (Fernet-DEK je Nutzer, umschlossen von einem
+                    Master-Schlüssel).
+                </p>
+                <p>
+                    <strong>Weitergabe an Dritte:</strong> Zur Erfüllung des Zwecks
+                    übermittelt die Anwendung deine Zugangsdaten in deinem Auftrag an
+                    zwei externe Dienste: <em>WebUntis</em> (Stundenplan-Abruf) und das
+                    <em>IHK-Portal tibrosBB</em> (Einreichung des Berichtshefts, nur auf
+                    deine ausdrückliche Aktion hin). Eine darüber hinausgehende
+                    Weitergabe findet nicht statt.
+                </p>
+                <p>
+                    <strong>Zweck:</strong> Automatischer Abruf des Schul-Stundenplans
+                    und Erzeugung bzw. Einreichung des Berichtsheft-Textes.
+                </p>
+                <p>
+                    <strong>Speicherdauer / Löschung:</strong> Daten bleiben gespeichert,
+                    solange dein Konto besteht. Eine Löschung erfolgt auf Anfrage per
+                    E-Mail an die oben genannte Adresse.
+                </p>
+                <p>
+                    <strong>Deine Rechte:</strong> Auskunft, Berichtigung, Löschung,
+                    Einschränkung und Widerspruch (Art. 15–21 DSGVO) — Anfrage an die
+                    oben genannte Kontaktadresse.
+                </p>
+                <p>
+                    <strong>Hosting:</strong>
+                    <span class="placeholder">[Hoster bzw. Betriebsort eintragen]</span>
+                </p>
+            </section>
+        </div>
+    </div>
+</body>
+</html>

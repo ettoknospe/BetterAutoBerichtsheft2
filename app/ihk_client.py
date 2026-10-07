@@ -34,6 +34,7 @@ import requests
 from bs4 import BeautifulSoup
 
 from . import config
+from .netcheck import validate_external_host, validate_redirect_target
 from .settings import UserSettings
 from .time_utils import current_week_id
 
@@ -51,9 +52,18 @@ class IhkClient:
         self.cfg = settings or UserSettings.from_config()
         if not self.cfg.IHK_USER or not self.cfg.IHK_PASS:
             raise IhkError("IHK_USER / IHK_PASS not set")
+        # SSRF guard: the host comes from user settings. Validate it points at a
+        # public server. NOTE: redirects are deliberately left enabled here —
+        # save_entry() reads the post-redirect r.url as its success signal and
+        # login() checks the followed response body, so this client's flow
+        # depends on following redirects (unlike the Untis client). Each hop is
+        # re-validated by validate_redirect_target below, since a validated
+        # public host could later redirect to a private/internal target.
+        validate_external_host(self.cfg.IHK_HOST)
         self.base = f"https://{self.cfg.IHK_HOST}/tibrosBB"
         self.s = requests.Session()
         self.s.headers["User-Agent"] = "berichtsheft/1.0"
+        self.s.hooks["response"].append(validate_redirect_target)
 
     def login(self):
         self.s.get(f"{self.base}/BB_auszubildende.jsp", timeout=30)

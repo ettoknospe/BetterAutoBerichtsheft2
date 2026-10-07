@@ -9,4 +9,5 @@ services:
       TZ: Europe/Berlin
     volumes:
       - ./data:/data
+      - ./static:/srv/static:ro
     restart: unless-stopped
